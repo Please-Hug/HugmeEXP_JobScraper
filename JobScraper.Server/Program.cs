@@ -1,6 +1,7 @@
 using JobScraper.Infrastructure.Data;
 using JobScraper.Infrastructure.Data.Repositories;
 using JobScraper.Core.Interfaces;
+using JobScraper.Server.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +9,15 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+});
 
 // Entity Framework 설정
 builder.Services.AddDbContext<JobScraperDbContext>(options =>
@@ -19,38 +29,26 @@ builder.Services.AddScoped<IJobListingRepository, JobListingRepository>();
 builder.Services.AddScoped<IJobDetailRepository, JobDetailRepository>();
 builder.Services.AddScoped<ISkillRepository, SkillRepository>();
 
+// Service DI 설정
+builder.Services.AddScoped<IJobListingService, JobListingService>();
+builder.Services.AddScoped<IJobDetailService, JobDetailService>();
+builder.Services.AddScoped<ISkillService, SkillService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+// 압축 미들웨어 활성화
+app.UseResponseCompression();
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
