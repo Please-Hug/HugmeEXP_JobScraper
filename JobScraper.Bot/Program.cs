@@ -13,7 +13,6 @@ builder.Services.AddLogging(logging =>
     logging.AddConsole();
 });
 builder.Services.AddSingleton<IHttpClient, DefaultHttpClient>();
-builder.Services.AddSingleton<IQueueClient, RabbitMQClient>();
 builder.Services.AddKeyedSingleton<IJobScraper, WantedScraper>("wanted");
 builder.Services.AddKeyedSingleton<IJobScraper, JumpitScraper>("jumpit");
 builder.Services.AddSingleton<IQueueClient>(_ =>

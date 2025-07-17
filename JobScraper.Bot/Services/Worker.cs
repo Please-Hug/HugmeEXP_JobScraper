@@ -10,8 +10,8 @@ namespace JobScraper.Bot.Services;
 public class Worker(
     ILogger<Worker> logger,
     IQueueClient queueClient,
-    WantedScraper wantedScraper,
-    JumpitScraper jumpitScraper,
+    [FromKeyedServices("wanted")] IJobScraper wantedScraper,
+    [FromKeyedServices("jumpit")] IJobScraper jumpitScraper,
     IHttpClient httpClient)
     : BackgroundService
 {
