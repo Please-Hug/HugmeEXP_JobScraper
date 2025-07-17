@@ -9,6 +9,7 @@ namespace JobScraper.Infrastructure.Messaging.Clients;
 public interface IQueueClient
 {
     Task<ScrapingCommand?> ReceiveCommandAsync();
+    Task SendCommandAsync(ScrapingCommand command);
 }
 
 public class RabbitMQClient : IQueueClient
@@ -48,5 +49,16 @@ public class RabbitMQClient : IQueueClient
         var body = result.Body.ToArray();
         var message = Encoding.UTF8.GetString(body);
         return JsonSerializer.Deserialize<ScrapingCommand>(message);
+    }
+
+    public async Task SendCommandAsync(ScrapingCommand command)
+    {
+        var message = JsonSerializer.Serialize(command);
+        var body = Encoding.UTF8.GetBytes(message);
+        
+        await _channel.BasicPublishAsync(
+            exchange: "",
+            routingKey: _queueName,
+            body: body);
     }
 }

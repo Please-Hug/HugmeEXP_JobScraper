@@ -10,4 +10,5 @@ public class ScrapingCommand
     public CommandType Type { get; set; }
     public string? JobId { get; set; }
     public JobSearchParameters? SearchParameters { get; set; }
+    public DateTime Timestamp { get; set; }
 }

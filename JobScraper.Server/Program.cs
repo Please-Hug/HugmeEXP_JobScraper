@@ -2,6 +2,7 @@ using JobScraper.Infrastructure.Data;
 using JobScraper.Infrastructure.Data.Repositories;
 using JobScraper.Core.Interfaces;
 using JobScraper.Server.Services;
+using JobScraper.Infrastructure.Messaging.Clients;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,6 +34,10 @@ builder.Services.AddScoped<ISkillRepository, SkillRepository>();
 builder.Services.AddScoped<IJobListingService, JobListingService>();
 builder.Services.AddScoped<IJobDetailService, JobDetailService>();
 builder.Services.AddScoped<ISkillService, SkillService>();
+
+// RabbitMQ 클라이언트 설정
+builder.Services.AddSingleton<IQueueClient>(_ =>
+    RabbitMQClient.CreateAsync("localhost", "job-scraper-commands").GetAwaiter().GetResult());
 
 var app = builder.Build();
 
