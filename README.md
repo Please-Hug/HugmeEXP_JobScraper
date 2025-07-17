@@ -5,7 +5,7 @@
 ![MySQL](https://img.shields.io/badge/Database-MySQL-orange)
 ![RabbitMQ](https://img.shields.io/badge/Messaging-RabbitMQ-red)
 
-채용공고 스크래핑 및 관리를 위한 마이크로서비스 아키텍처 기반 시스템입니다.
+채용공고 스크래핑 및 관리를 위한 시스템입니다.
 
 > ⚠️ **개발 중인 프로젝트입니다.** 일부 기능이 완전히 구현되지 않았을 수 있습니다.
 
