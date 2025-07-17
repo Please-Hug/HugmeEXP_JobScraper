@@ -5,7 +5,7 @@ namespace JobScraper.Infrastructure.Data.Entities;
 public class JobListingEntity
 {
     [Key]
-    public required string Id { get; set; }
+    public required int Id { get; set; }
     public required string Title { get; set; }
     public required string Company { get; set; }
     public required string Url { get; set; }

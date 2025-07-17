@@ -1,8 +1,23 @@
+using JobScraper.Infrastructure.Data;
+using JobScraper.Infrastructure.Data.Repositories;
+using JobScraper.Core.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+// Entity Framework 설정
+builder.Services.AddDbContext<JobScraperDbContext>(options =>
+    options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), 
+        new MySqlServerVersion(new Version(8, 0, 21))));
+
+// Repository DI 설정
+builder.Services.AddScoped<IJobListingRepository, JobListingRepository>();
+builder.Services.AddScoped<IJobDetailRepository, JobDetailRepository>();
+builder.Services.AddScoped<ISkillRepository, SkillRepository>();
 
 var app = builder.Build();
 

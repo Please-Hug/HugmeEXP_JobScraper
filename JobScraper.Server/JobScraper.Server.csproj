@@ -8,10 +8,13 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.7" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.8" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\JobScraper.Core\JobScraper.Core.csproj" />
+    <ProjectReference Include="..\JobScraper.Infrastructure.Data\JobScraper.Infrastructure.Data.csproj" />
     <ProjectReference Include="..\JobScraper.Infrastructure.Messaging\JobScraper.Infrastructure.Messaging.csproj" />
   </ItemGroup>
 

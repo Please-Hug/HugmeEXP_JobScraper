@@ -2,7 +2,7 @@
 
 public class JobListing
 {
-    public required string Id { get; set; }
+    public required int Id { get; set; }
     public required string Title { get; set; }
     public required string Company { get; set; }
     public required string Url { get; set; }
