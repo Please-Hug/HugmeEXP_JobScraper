@@ -56,18 +56,28 @@ public class JobListingController : ControllerBase
         return Ok(jobListings);
     }
 
+    [HttpGet("exists")]
+    public async Task<ActionResult<bool>> CheckJobListingExists([FromQuery] string url)
+    {
+        if (string.IsNullOrEmpty(url))
+        {
+            return BadRequest("URL is required");
+        }
+
+        var exists = await _jobListingService.JobListingExistsAsync(url);
+        return Ok(exists);
+    }
+
     [HttpPost]
     public async Task<ActionResult<JobListing>> CreateJobListing([FromBody] JobListing jobListing)
     {
-        try
+        if (!ModelState.IsValid)
         {
-            var createdJobListing = await _jobListingService.CreateJobListingAsync(jobListing);
-            return CreatedAtAction(nameof(GetJobListing), new { id = createdJobListing.Id }, createdJobListing);
+            return BadRequest(ModelState);
         }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(ex.Message);
-        }
+
+        var createdJobListing = await _jobListingService.CreateJobListingAsync(jobListing);
+        return CreatedAtAction(nameof(GetJobListing), new { id = createdJobListing.Id }, createdJobListing);
     }
 
     [HttpPut("{id}")]
@@ -76,6 +86,11 @@ public class JobListingController : ControllerBase
         if (id != jobListing.Id)
         {
             return BadRequest("ID mismatch");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
         }
 
         try
@@ -94,17 +109,5 @@ public class JobListingController : ControllerBase
     {
         await _jobListingService.DeleteJobListingAsync(id);
         return NoContent();
-    }
-
-    [HttpGet("exists")]
-    public async Task<ActionResult<bool>> CheckJobListingExists([FromQuery] string url)
-    {
-        if (string.IsNullOrEmpty(url))
-        {
-            return BadRequest("URL is required");
-        }
-
-        var exists = await _jobListingService.JobListingExistsAsync(url);
-        return Ok(exists);
     }
 }

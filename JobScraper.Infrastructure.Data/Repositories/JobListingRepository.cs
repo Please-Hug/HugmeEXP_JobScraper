@@ -88,6 +88,7 @@ public class JobListingRepository : IJobListingRepository
             Id = entity.Id,
             Title = entity.Title,
             Company = entity.Company,
+            Experience = entity.Experience,
             Url = entity.Url,
             Source = entity.Source
         };
@@ -100,6 +101,7 @@ public class JobListingRepository : IJobListingRepository
             Id = model.Id,
             Title = model.Title,
             Company = model.Company,
+            Experience = model.Experience,
             Url = model.Url,
             Source = model.Source
         };

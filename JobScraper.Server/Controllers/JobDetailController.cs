@@ -15,6 +15,13 @@ public class JobDetailController : ControllerBase
         _jobDetailService = jobDetailService;
     }
 
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<JobDetail>>> GetAllJobDetails()
+    {
+        var jobDetails = await _jobDetailService.GetAllJobDetailsAsync();
+        return Ok(jobDetails);
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<JobDetail>> GetJobDetail(int id)
     {
@@ -29,6 +36,11 @@ public class JobDetailController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<JobDetail>> CreateJobDetail([FromBody] JobDetail jobDetail)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
         var createdJobDetail = await _jobDetailService.CreateJobDetailAsync(jobDetail);
         return CreatedAtAction(nameof(GetJobDetail), new { id = createdJobDetail.Id }, createdJobDetail);
     }
@@ -41,6 +53,11 @@ public class JobDetailController : ControllerBase
             return BadRequest("JobDetail and skill names are required");
         }
 
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
         var createdJobDetail = await _jobDetailService.CreateJobDetailWithSkillsAsync(request.JobDetail, request.SkillNames);
         return CreatedAtAction(nameof(GetJobDetail), new { id = createdJobDetail.Id }, createdJobDetail);
     }
@@ -51,6 +68,11 @@ public class JobDetailController : ControllerBase
         if (id != jobDetail.Id)
         {
             return BadRequest("ID mismatch");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
         }
 
         try
@@ -74,15 +96,29 @@ public class JobDetailController : ControllerBase
     [HttpPost("{jobDetailId}/skills/{skillId}")]
     public async Task<ActionResult> AddSkillToJob(int jobDetailId, int skillId)
     {
-        await _jobDetailService.AddSkillToJobAsync(jobDetailId, skillId);
-        return NoContent();
+        try
+        {
+            await _jobDetailService.AddSkillToJobAsync(jobDetailId, skillId);
+            return NoContent();
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
 
     [HttpDelete("{jobDetailId}/skills/{skillId}")]
     public async Task<ActionResult> RemoveSkillFromJob(int jobDetailId, int skillId)
     {
-        await _jobDetailService.RemoveSkillFromJobAsync(jobDetailId, skillId);
-        return NoContent();
+        try
+        {
+            await _jobDetailService.RemoveSkillFromJobAsync(jobDetailId, skillId);
+            return NoContent();
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
 }
 

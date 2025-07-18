@@ -29,24 +29,11 @@ public class SkillService : ISkillService
 
     public async Task<Skill> CreateSkillAsync(Skill skill)
     {
-        // 중복 이름 체크
-        var existing = await _skillRepository.GetByNameAsync(skill.Name);
-        if (existing != null)
-        {
-            throw new InvalidOperationException($"Skill with name '{skill.Name}' already exists.");
-        }
-
         return await _skillRepository.CreateAsync(skill);
     }
 
     public async Task<Skill> UpdateSkillAsync(Skill skill)
     {
-        var existing = await _skillRepository.GetByIdAsync(skill.Id);
-        if (existing == null)
-        {
-            throw new ArgumentException($"Skill with ID {skill.Id} not found.");
-        }
-
         return await _skillRepository.UpdateAsync(skill);
     }
 
@@ -62,18 +49,13 @@ public class SkillService : ISkillService
 
     public async Task<Skill> GetOrCreateSkillAsync(string skillName)
     {
-        var existing = await _skillRepository.GetByNameAsync(skillName);
-        if (existing != null)
+        var existingSkill = await _skillRepository.GetByNameAsync(skillName);
+        if (existingSkill != null)
         {
-            return existing;
+            return existingSkill;
         }
 
-        var newSkill = new Skill
-        {
-            Id = 0, // 새로운 스킬이므로 0으로 설정
-            Name = skillName
-        };
-
+        var newSkill = new Skill { Name = skillName };
         return await _skillRepository.CreateAsync(newSkill);
     }
 
@@ -81,7 +63,7 @@ public class SkillService : ISkillService
     {
         var skills = new List<Skill>();
         
-        foreach (var skillName in skillNames.Distinct())
+        foreach (var skillName in skillNames)
         {
             var skill = await GetOrCreateSkillAsync(skillName);
             skills.Add(skill);
