@@ -6,12 +6,17 @@ namespace JobScraper.Server.Services;
 public class JobDetailService : IJobDetailService
 {
     private readonly IJobDetailRepository _jobDetailRepository;
-    private readonly ISkillService _skillService;
+    private readonly ISkillRepository _skillRepository;
 
-    public JobDetailService(IJobDetailRepository jobDetailRepository, ISkillService skillService)
+    public JobDetailService(IJobDetailRepository jobDetailRepository, ISkillRepository skillRepository)
     {
         _jobDetailRepository = jobDetailRepository;
-        _skillService = skillService;
+        _skillRepository = skillRepository;
+    }
+
+    public async Task<IEnumerable<JobDetail>> GetAllJobDetailsAsync()
+    {
+        return await _jobDetailRepository.GetAllAsync();
     }
 
     public async Task<JobDetail?> GetJobDetailByIdAsync(int id)
@@ -26,12 +31,6 @@ public class JobDetailService : IJobDetailService
 
     public async Task<JobDetail> UpdateJobDetailAsync(JobDetail jobDetail)
     {
-        var existing = await _jobDetailRepository.GetByIdAsync(jobDetail.Id);
-        if (existing == null)
-        {
-            throw new ArgumentException($"JobDetail with ID {jobDetail.Id} not found.");
-        }
-
         return await _jobDetailRepository.UpdateAsync(jobDetail);
     }
 
@@ -52,13 +51,10 @@ public class JobDetailService : IJobDetailService
 
     public async Task<JobDetail> CreateJobDetailWithSkillsAsync(JobDetail jobDetail, IEnumerable<string> skillNames)
     {
-        // 스킬들을 먼저 생성하거나 조회
-        var skills = await _skillService.GetOrCreateSkillsAsync(skillNames);
+        // 스킬 이름들을 JobDetail의 RequiredSkills에 설정
+        jobDetail.RequiredSkills = skillNames.ToList();
         
-        // JobDetail에 스킬들 할당
-        jobDetail.RequiredSkills = skills.ToList();
-        
-        // JobDetail 생성
+        // Repository에서 자동으로 스킬 엔티티를 생성/연결해줌
         return await _jobDetailRepository.CreateAsync(jobDetail);
     }
 }

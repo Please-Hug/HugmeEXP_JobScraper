@@ -4,6 +4,7 @@ namespace JobScraper.Core.Interfaces;
 
 public interface IJobDetailService
 {
+    Task<IEnumerable<JobDetail>> GetAllJobDetailsAsync();
     Task<JobDetail?> GetJobDetailByIdAsync(int id);
     Task<JobDetail> CreateJobDetailAsync(JobDetail jobDetail);
     Task<JobDetail> UpdateJobDetailAsync(JobDetail jobDetail);

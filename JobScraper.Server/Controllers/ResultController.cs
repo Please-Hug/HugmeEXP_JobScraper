@@ -115,12 +115,15 @@ public class ResultController : ControllerBase
 
         try
         {
-            // 스킬 정보가 있다면 먼저 처리
+            // 스킬 정보가 있다면 먼저 처리 - RequiredSkills는 이미 string 컬렉션
             if (result.JobDetail.RequiredSkills?.Any() == true)
             {
-                var skillNames = result.JobDetail.RequiredSkills.Select(s => s.Name);
+                // RequiredSkills는 이미 ICollection<string>이므로 직접 사용
+                var skillNames = result.JobDetail.RequiredSkills;
                 var processedSkills = await _skillService.GetOrCreateSkillsAsync(skillNames);
-                result.JobDetail.RequiredSkills = processedSkills.ToList();
+                
+                // JobDetail 모델은 string 컬렉션을 사용하므로 스킬 이름만 저장
+                result.JobDetail.RequiredSkills = processedSkills.Select(s => s.Name).ToList();
             }
 
             // JobDetail이 이미 존재하는지 확인

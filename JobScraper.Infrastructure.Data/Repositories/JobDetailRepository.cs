@@ -14,11 +14,20 @@ public class JobDetailRepository : IJobDetailRepository
         _context = context;
     }
 
+    public async Task<IEnumerable<JobDetail>> GetAllAsync()
+    {
+        var entities = await _context.JobDetails
+            .Include(jd => jd.JobListing)
+            .Include(jd => jd.RequiredSkills)
+            .ToListAsync();
+        return entities.Select(MapToModel);
+    }
+
     public async Task<JobDetail?> GetByIdAsync(int id)
     {
         var entity = await _context.JobDetails
-            .Include(jd => jd.RequiredSkills)
             .Include(jd => jd.JobListing)
+            .Include(jd => jd.RequiredSkills)
             .FirstOrDefaultAsync(jd => jd.Id == id);
         
         return entity != null ? MapToModel(entity) : null;
@@ -27,11 +36,9 @@ public class JobDetailRepository : IJobDetailRepository
     public async Task<JobDetail> CreateAsync(JobDetail jobDetail)
     {
         var entity = await MapToEntityAsync(jobDetail);
-        entity.JobListingId = jobDetail.Id; // FK 설정
         _context.JobDetails.Add(entity);
         await _context.SaveChangesAsync();
         
-        // ID를 업데이트하고 반환
         jobDetail.Id = entity.Id;
         return jobDetail;
     }
@@ -47,22 +54,30 @@ public class JobDetailRepository : IJobDetailRepository
 
         // 기본 속성 업데이트
         entity.Description = jobDetail.Description;
-        entity.MinSalary = jobDetail.MinSalary;
-        entity.MaxSalary = jobDetail.MaxSalary;
+        entity.Salary = jobDetail.Salary;
+        entity.EducationLevel = jobDetail.EducationLevel;
         entity.Location = jobDetail.Location;
+        entity.Prefers = jobDetail.Prefers.ToList();
+        entity.Tags = jobDetail.Tags.ToList();
+        entity.Qualifications = jobDetail.Qualifications.ToList();
 
-        // 스킬 관계 업데이트 - N+1 문제 해결
+        // 스킬 관계 업데이트 - 문자열을 스킬 엔티티로 변환
         entity.RequiredSkills.Clear();
         
         if (jobDetail.RequiredSkills.Count != 0)
         {
-            var skillIds = jobDetail.RequiredSkills.Select(s => s.Id).ToList();
-            var skillEntities = await _context.Skills
-                .Where(s => skillIds.Contains(s.Id))
-                .ToListAsync();
-
-            foreach (var skillEntity in skillEntities)
+            foreach (var skillName in jobDetail.RequiredSkills)
             {
+                var skillEntity = await _context.Skills
+                    .FirstOrDefaultAsync(s => s.Name == skillName);
+                
+                if (skillEntity == null)
+                {
+                    skillEntity = new SkillEntity { Name = skillName };
+                    _context.Skills.Add(skillEntity);
+                    await _context.SaveChangesAsync();
+                }
+                
                 entity.RequiredSkills.Add(skillEntity);
             }
         }
@@ -87,9 +102,14 @@ public class JobDetailRepository : IJobDetailRepository
             .Include(jd => jd.RequiredSkills)
             .FirstOrDefaultAsync(jd => jd.Id == jobDetailId);
         
+        if (jobDetail == null)
+            throw new ArgumentException($"JobDetail with Id {jobDetailId} not found");
+
         var skill = await _context.Skills.FindAsync(skillId);
-        
-        if (jobDetail != null && skill != null && !jobDetail.RequiredSkills.Contains(skill))
+        if (skill == null)
+            throw new ArgumentException($"Skill with Id {skillId} not found");
+
+        if (!jobDetail.RequiredSkills.Contains(skill))
         {
             jobDetail.RequiredSkills.Add(skill);
             await _context.SaveChangesAsync();
@@ -102,14 +122,14 @@ public class JobDetailRepository : IJobDetailRepository
             .Include(jd => jd.RequiredSkills)
             .FirstOrDefaultAsync(jd => jd.Id == jobDetailId);
         
-        if (jobDetail != null)
+        if (jobDetail == null)
+            throw new ArgumentException($"JobDetail with Id {jobDetailId} not found");
+
+        var skill = jobDetail.RequiredSkills.FirstOrDefault(s => s.Id == skillId);
+        if (skill != null)
         {
-            var skill = jobDetail.RequiredSkills.FirstOrDefault(s => s.Id == skillId);
-            if (skill != null)
-            {
-                jobDetail.RequiredSkills.Remove(skill);
-                await _context.SaveChangesAsync();
-            }
+            jobDetail.RequiredSkills.Remove(skill);
+            await _context.SaveChangesAsync();
         }
     }
 
@@ -120,16 +140,16 @@ public class JobDetailRepository : IJobDetailRepository
             Id = entity.Id,
             Title = entity.JobListing.Title,
             Company = entity.JobListing.Company,
+            Experience = entity.JobListing.Experience,
             Url = entity.JobListing.Url,
             Source = entity.JobListing.Source,
             Description = entity.Description,
-            RequiredSkills = entity.RequiredSkills.Select(s => new Skill
-            {
-                Id = s.Id,
-                Name = s.Name
-            }).ToList(),
-            MinSalary = entity.MinSalary,
-            MaxSalary = entity.MaxSalary,
+            RequiredSkills = entity.RequiredSkills.Select(s => s.Name).ToList(),
+            Salary = entity.Salary,
+            EducationLevel = entity.EducationLevel,
+            Prefers = entity.Prefers.ToList(),
+            Tags = entity.Tags.ToList(),
+            Qualifications = entity.Qualifications.ToList(),
             Location = entity.Location
         };
     }
@@ -144,24 +164,32 @@ public class JobDetailRepository : IJobDetailRepository
         var entity = new JobDetailEntity
         {
             JobListingId = model.Id,
-            JobListing = jobListing, // required 프로퍼티 설정
+            JobListing = jobListing,
             Description = model.Description,
-            MinSalary = model.MinSalary,
-            MaxSalary = model.MaxSalary,
+            Salary = model.Salary,
+            EducationLevel = model.EducationLevel,
             Location = model.Location,
+            Prefers = model.Prefers.ToList(),
+            Tags = model.Tags.ToList(),
+            Qualifications = model.Qualifications.ToList(),
             RequiredSkills = new List<SkillEntity>()
         };
 
-        // 스킬 엔티티들을 찾아서 연결 - N+1 문제 해결
+        // 문자열 스킬들을 스킬 엔티티로 변환
         if (model.RequiredSkills.Count != 0)
         {
-            var skillIds = model.RequiredSkills.Select(s => s.Id).ToList();
-            var skillEntities = await _context.Skills
-                .Where(s => skillIds.Contains(s.Id))
-                .ToListAsync();
-
-            foreach (var skillEntity in skillEntities)
+            foreach (var skillName in model.RequiredSkills)
             {
+                var skillEntity = await _context.Skills
+                    .FirstOrDefaultAsync(s => s.Name == skillName);
+                
+                if (skillEntity == null)
+                {
+                    skillEntity = new SkillEntity { Name = skillName };
+                    _context.Skills.Add(skillEntity);
+                    await _context.SaveChangesAsync();
+                }
+                
                 entity.RequiredSkills.Add(skillEntity);
             }
         }

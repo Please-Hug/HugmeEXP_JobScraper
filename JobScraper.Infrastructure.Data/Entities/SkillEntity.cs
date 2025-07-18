@@ -7,6 +7,8 @@ public class SkillEntity
     [Key]
     public int Id { get; set; }
     
+    [Required]
+    [MaxLength(100)]
     public required string Name { get; set; }
     
     // 다대다 관계를 위한 네비게이션 프로퍼티
