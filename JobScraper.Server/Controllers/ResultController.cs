@@ -93,11 +93,11 @@ public class ResultController : ControllerBase
                 // 새 채용공고 저장
                 await _jobListingService.CreateJobListingAsync(listing);
                 processedCount++;
-                _logger.LogDebug("새 채용공고 저장: {title} - {company}", listing.Title, listing.Company);
+                _logger.LogDebug("새 채용공고 저장: {title} - {company}", listing.Title, listing.Company.Name);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "채용공고 저장 실패: {title} - {company}", listing.Title, listing.Company);
+                _logger.LogError(ex, "채용공고 저장 실패: {title} - {company}", listing.Title, listing.Company.Name);
                 skippedCount++;
             }
         }
@@ -118,7 +118,9 @@ public class ResultController : ControllerBase
             // 스킬 정보가 있다면 먼저 처리
             if (result.JobDetail.RequiredSkills?.Any() == true)
             {
-                var skillNames = result.JobDetail.RequiredSkills.Select(s => s.Name);
+                // 스킬명을 영문명 또는 한글명에서 추출 (우선 영문명 사용, 없으면 한글명)
+                var skillNames = result.JobDetail.RequiredSkills.Select(s => 
+                    !string.IsNullOrEmpty(s.EnglishName) ? s.EnglishName : s.KoreanName);
                 var processedSkills = await _skillService.GetOrCreateSkillsAsync(skillNames);
                 result.JobDetail.RequiredSkills = processedSkills.ToList();
             }
