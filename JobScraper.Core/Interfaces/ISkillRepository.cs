@@ -10,5 +10,6 @@ public interface ISkillRepository
     Task<Skill> CreateAsync(Skill skill);
     Task<Skill> UpdateAsync(Skill skill);
     Task DeleteAsync(int id);
+    Task<bool> ExistsAsync(string name);
     Task<IEnumerable<Skill>> GetSkillsByJobDetailIdAsync(int jobDetailId);
 }

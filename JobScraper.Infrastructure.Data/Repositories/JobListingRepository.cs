@@ -16,19 +16,24 @@ public class JobListingRepository : IJobListingRepository
 
     public async Task<IEnumerable<JobListing>> GetAllAsync()
     {
-        var entities = await _context.JobListings.ToListAsync();
+        var entities = await _context.JobListings
+            .Include(jl => jl.Company)
+            .ToListAsync();
         return entities.Select(MapToModel);
     }
 
     public async Task<JobListing?> GetByIdAsync(int id)
     {
-        var entity = await _context.JobListings.FindAsync(id);
+        var entity = await _context.JobListings
+            .Include(jl => jl.Company)
+            .FirstOrDefaultAsync(jl => jl.Id == id);
         return entity != null ? MapToModel(entity) : null;
     }
 
     public async Task<JobListing?> GetByUrlAsync(string url)
     {
         var entity = await _context.JobListings
+            .Include(jl => jl.Company)
             .FirstOrDefaultAsync(jl => jl.Url == url);
         return entity != null ? MapToModel(entity) : null;
     }
@@ -50,7 +55,7 @@ public class JobListingRepository : IJobListingRepository
             throw new ArgumentException("JobListing not found", nameof(jobListing));
 
         entity.Title = jobListing.Title;
-        entity.Company = jobListing.Company;
+        entity.CompanyId = jobListing.Company.Id;
         entity.Url = jobListing.Url;
         entity.Source = jobListing.Source;
 
@@ -71,6 +76,7 @@ public class JobListingRepository : IJobListingRepository
     public async Task<IEnumerable<JobListing>> GetBySourceAsync(string source)
     {
         var entities = await _context.JobListings
+            .Include(jl => jl.Company)
             .Where(jl => jl.Source == source)
             .ToListAsync();
         return entities.Select(MapToModel);
@@ -87,7 +93,15 @@ public class JobListingRepository : IJobListingRepository
         {
             Id = entity.Id,
             Title = entity.Title,
-            Company = entity.Company,
+            Company = new Company
+            {
+                Id = entity.Company.Id,
+                Name = entity.Company.Name,
+                Address = entity.Company.Address,
+                Latitude = entity.Company.Latitude,
+                Longitude = entity.Company.Longitude,
+                EstablishedDate = entity.Company.EstablishedDate
+            },
             Url = entity.Url,
             Source = entity.Source
         };
@@ -99,7 +113,16 @@ public class JobListingRepository : IJobListingRepository
         {
             Id = model.Id,
             Title = model.Title,
-            Company = model.Company,
+            CompanyId = model.Company.Id,
+            Company = new CompanyEntity
+            {
+                Id = model.Company.Id,
+                Name = model.Company.Name,
+                Address = model.Company.Address,
+                Latitude = model.Company.Latitude,
+                Longitude = model.Company.Longitude,
+                EstablishedDate = model.Company.EstablishedDate
+            },
             Url = model.Url,
             Source = model.Source
         };

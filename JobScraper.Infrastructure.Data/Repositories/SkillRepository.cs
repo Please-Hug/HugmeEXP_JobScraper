@@ -28,7 +28,9 @@ public class SkillRepository : ISkillRepository
 
     public async Task<Skill?> GetByNameAsync(string name)
     {
-        var entity = await _context.Skills.FirstOrDefaultAsync(s => s.Name == name);
+        // 영문명 또는 한글명으로 검색
+        var entity = await _context.Skills
+            .FirstOrDefaultAsync(s => s.EnglishName == name || s.KoreanName == name);
         return entity != null ? MapToModel(entity) : null;
     }
 
@@ -47,7 +49,9 @@ public class SkillRepository : ISkillRepository
         if (entity == null)
             throw new ArgumentException("Skill not found", nameof(skill));
 
-        entity.Name = skill.Name;
+        entity.EnglishName = skill.EnglishName;
+        entity.KoreanName = skill.KoreanName;
+        entity.IconUrl = skill.IconUrl;
         await _context.SaveChangesAsync();
         return skill;
     }
@@ -62,13 +66,17 @@ public class SkillRepository : ISkillRepository
         }
     }
 
+    public async Task<bool> ExistsAsync(string name)
+    {
+        // 영문명 또는 한글명으로 존재 여부 확인
+        return await _context.Skills.AnyAsync(s => s.EnglishName == name || s.KoreanName == name);
+    }
+
     public async Task<IEnumerable<Skill>> GetSkillsByJobDetailIdAsync(int jobDetailId)
     {
-        var entities = await _context.JobDetails
-            .Where(jd => jd.Id == jobDetailId)
-            .SelectMany(jd => jd.RequiredSkills)
+        var entities = await _context.Skills
+            .Where(s => s.JobDetails.Any(jd => jd.Id == jobDetailId))
             .ToListAsync();
-        
         return entities.Select(MapToModel);
     }
 
@@ -77,7 +85,9 @@ public class SkillRepository : ISkillRepository
         return new Skill
         {
             Id = entity.Id,
-            Name = entity.Name
+            EnglishName = entity.EnglishName,
+            KoreanName = entity.KoreanName,
+            IconUrl = entity.IconUrl
         };
     }
 
@@ -86,7 +96,9 @@ public class SkillRepository : ISkillRepository
         return new SkillEntity
         {
             Id = model.Id,
-            Name = model.Name
+            EnglishName = model.EnglishName,
+            KoreanName = model.KoreanName,
+            IconUrl = model.IconUrl
         };
     }
 }

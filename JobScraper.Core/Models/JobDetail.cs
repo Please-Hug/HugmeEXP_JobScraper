@@ -7,4 +7,13 @@ public class JobDetail : JobListing
     public required long MinSalary { get; set; }
     public required long MaxSalary { get; set; }
     public required string Location { get; set; }
+    
+    // 추가된 필드들
+    public string? Education { get; set; }  // 학력
+    public string? Experience { get; set; }  // 경력
+    public string? Requirements { get; set; }  // 자격요건
+    public string? PreferredQualifications { get; set; }  // 우대사항
+    public string? Benefits { get; set; }  // 복지
+    public decimal? LocationLatitude { get; set; }  // 위치 위도
+    public decimal? LocationLongitude { get; set; }  // 위치 경도
 }
