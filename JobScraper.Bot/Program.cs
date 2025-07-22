@@ -12,9 +12,22 @@ builder.Services.AddLogging(logging =>
     logging.AddConsole();
 });
 
-// HttpClientFactory 추가 (WantedScraper에서 사용)
-builder.Services.AddHttpClient("Wanted");
-builder.Services.AddHttpClient("Jumpit");
+builder.Services.AddHttpClient("wanted", client =>
+{
+    client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
+{
+    AutomaticDecompression = System.Net.DecompressionMethods.All
+});
+
+builder.Services.AddHttpClient("jumpit", client =>
+{
+    client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
+{
+    AutomaticDecompression = System.Net.DecompressionMethods.All
+});
+
 
 // 기존의 커스텀 HttpClient (다른 용도)
 builder.Services.AddSingleton<IHttpClient, DefaultHttpClient>();

@@ -4,12 +4,16 @@ using JobScraper.Core;
 using JobScraper.Core.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+
 namespace JobScraper.Infrastructure.Http.Clients;
 
 public class DefaultHttpClient(ILogger<DefaultHttpClient> logger, IConfiguration configuration)
     : IHttpClient
 {
-    private readonly HttpClient _client = new();
+    private readonly HttpClient _client = new(new HttpClientHandler()
+    {
+        AutomaticDecompression = System.Net.DecompressionMethods.All
+    });
 
     private readonly string _resultEndpoint = configuration["ResultEndpoint"] ??
                                               throw new InvalidOperationException("ResultEndpoint 설정이 없습니다");

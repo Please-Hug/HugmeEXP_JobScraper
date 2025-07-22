@@ -19,8 +19,8 @@ public class WantedScraper : IJobScraper
 
     public async Task<IEnumerable<JobListing>> GetJobListingsAsync(JobSearchParameters parameters)
     {
-        var httpClient = _httpClientFactory.CreateClient("Wanted");
         _logger.LogInformation("Getting Job Listings");
+        var httpClient = _httpClientFactory.CreateClient("wanted");
         var sortBy = parameters.SortBy switch
         {
             "latest" => "job.latest_order",
@@ -94,7 +94,7 @@ public class WantedScraper : IJobScraper
 
     public async Task<JobDetail> GetJobDetailAsync(string jobId)
     {
-        var httpClient = _httpClientFactory.CreateClient("Wanted");
+        var httpClient = _httpClientFactory.CreateClient("wanted");
         var id = jobId.Split("::").Last();
         var request = new HttpRequestMessage(HttpMethod.Get, $"https://www.wanted.co.kr/api/chaos/jobs/v4/{id}/details?{DateTime.Now.Ticks}=");
         var referer = $"https://www.wanted.co.kr/wd/{id}";
@@ -149,7 +149,7 @@ public class WantedScraper : IJobScraper
 
     public async Task<Company> GetCompanyAsync(string companyId)
     {
-        var httpClient = _httpClientFactory.CreateClient("Wanted");
+        var httpClient = _httpClientFactory.CreateClient("wanted");
         var id = companyId.Split("::").Last();
         var request = new HttpRequestMessage(HttpMethod.Get, $"https://www.wanted.co.kr/company/{id}");
         var referer = $"https://www.wanted.co.kr/company/{id}";
