@@ -182,7 +182,7 @@ public class JobListingRepository : IJobListingRepository
 
         entity.SourceJobId = jobListing.SourceJobId;
         entity.Title = jobListing.Title;
-        entity.CompanyId = jobListing.Company.Id;
+        entity.CompanyId = jobListing.Company.Id ?? throw new ArgumentException("Company ID is required for update");
         entity.Url = jobListing.Url;
         entity.Source = jobListing.Source;
 

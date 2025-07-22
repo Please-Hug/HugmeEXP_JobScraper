@@ -8,7 +8,7 @@ public class Company
     /// <summary>
     /// 데이터베이스 Primary Key (자동 생성)
     /// </summary>
-    public required int Id { get; set; }
+    public int? Id { get; set; }
     
     public required string Name { get; set; }
     

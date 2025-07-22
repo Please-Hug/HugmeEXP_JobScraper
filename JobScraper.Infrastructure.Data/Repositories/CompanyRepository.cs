@@ -113,7 +113,7 @@ public static class CompanyMappingExtensions
     {
         return new CompanyEntity
         {
-            Id = model.Id,
+            Id = model.Id ?? 0, // nullable Id를 0으로 변환 (EF가 auto-increment로 처리)
             Name = model.Name,
             Address = model.Address,
             Latitude = model.Latitude,

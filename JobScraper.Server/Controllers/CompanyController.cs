@@ -99,9 +99,9 @@ public class CompanyController : ControllerBase
     {
         try
         {
-            if (id != company.Id)
+            if (!company.Id.HasValue || id != company.Id.Value)
             {
-                return BadRequest(new { Message = "URL의 ID와 요청 본문의 ID가 일치하지 않습니다." });
+                return BadRequest(new { Message = "URL의 ID와 요청 본문의 ID가 일치하지 않거나 Company ID가 누락되었습니다." });
             }
 
             if (!ModelState.IsValid)
