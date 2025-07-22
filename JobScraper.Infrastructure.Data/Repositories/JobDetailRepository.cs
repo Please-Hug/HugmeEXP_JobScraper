@@ -27,17 +27,17 @@ public class JobDetailRepository : IJobDetailRepository
 
     public async Task<JobDetail> CreateAsync(JobDetail jobDetail)
     {
-        if (!jobDetail.Id.HasValue)
+        if (string.IsNullOrEmpty(jobDetail.SourceJobId))
         {
-            throw new ArgumentException("JobDetail ID is required for creation.");
+            throw new ArgumentException("JobDetail SourceJobId is required for creation.");
         }
         
+        // 새로운 엔티티 생성
         var entity = await MapToEntityAsync(jobDetail);
-        entity.JobListingId = jobDetail.Id.Value; // 이미 HasValue로 체크했으므로 안전
+        // JobListingId는 이미 MapToEntityAsync에서 설정됨
         _context.JobDetails.Add(entity);
         await _context.SaveChangesAsync();
         
-        // ID를 업데이트하고 반환
         jobDetail.Id = entity.Id;
         return jobDetail;
     }
@@ -129,6 +129,17 @@ public class JobDetailRepository : IJobDetailRepository
         }
     }
 
+    public async Task<JobDetail?> GetByJobListingIdAsync(int id)
+    {
+        var entity = await _context.JobDetails
+            .Include(jd => jd.RequiredSkills)
+            .Include(jd => jd.JobListing)
+                .ThenInclude(jl => jl.Company)
+            .FirstOrDefaultAsync(jd => jd.JobListingId == id);
+        
+        return entity != null ? MapToModel(entity) : null;
+    }
+
     private JobDetail MapToModel(JobDetailEntity entity)
     {
         return new JobDetail
@@ -174,19 +185,19 @@ public class JobDetailRepository : IJobDetailRepository
 
     private async Task<JobDetailEntity> MapToEntityAsync(JobDetail model)
     {
-        if (!model.Id.HasValue)
+        if (string.IsNullOrEmpty(model.SourceJobId))
         {
-            throw new ArgumentException("JobDetail ID is required", nameof(model));
+            throw new ArgumentException("JobDetail SourceJobId is required", nameof(model));
         }
         
-        // JobListing을 먼저 찾아옴
-        var jobListing = await _context.JobListings.FindAsync(model.Id.Value);
+        // SourceJobId로 JobListing을 찾아옴
+        var jobListing = await _context.JobListings.FirstOrDefaultAsync(jl => jl.SourceJobId == model.SourceJobId);
         if (jobListing == null)
-            throw new ArgumentException($"JobListing with Id {model.Id} not found", nameof(model));
+            throw new ArgumentException($"JobListing with SourceJobId {model.SourceJobId} not found", nameof(model));
 
         var entity = new JobDetailEntity
         {
-            JobListingId = model.Id.Value, // 이미 HasValue로 체크했으므로 안전
+            JobListingId = jobListing.Id, // JobListing의 실제 ID 사용
             JobListing = jobListing,
             Description = model.Description,
             MinSalary = model.MinSalary,
@@ -208,13 +219,16 @@ public class JobDetailRepository : IJobDetailRepository
         if (model.RequiredSkills.Count != 0)
         {
             var skillIds = model.RequiredSkills.Select(s => s.Id).ToList();
-            var skillEntities = await _context.Skills
-                .Where(s => skillIds.Contains(s.Id))
-                .ToListAsync();
-
-            foreach (var skillEntity in skillEntities)
+            if (skillIds.Count > 0)
             {
-                entity.RequiredSkills.Add(skillEntity);
+                var skillEntities = await _context.Skills
+                    .Where(s => skillIds.Contains(s.Id))
+                    .ToListAsync();
+
+                foreach (var skillEntity in skillEntities)
+                {
+                    entity.RequiredSkills.Add(skillEntity);
+                }
             }
         }
 

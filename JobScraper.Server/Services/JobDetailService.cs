@@ -66,4 +66,14 @@ public class JobDetailService : IJobDetailService
         // JobDetail 생성
         return await _jobDetailRepository.CreateAsync(jobDetail);
     }
+
+    public async Task<JobDetail?> GetJobDetailByJobListingId(int id)
+    {
+        if (id <= 0)
+        {
+            throw new ArgumentException("JobListing ID must be greater than zero.", nameof(id));
+        }
+        
+        return await _jobDetailRepository.GetByJobListingIdAsync(id);
+    }
 }

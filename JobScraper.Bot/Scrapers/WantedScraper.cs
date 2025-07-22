@@ -1,4 +1,5 @@
-﻿using JobScraper.Core.Interfaces;
+﻿using HtmlAgilityPack.CssSelectors.NetCore;
+using JobScraper.Core.Interfaces;
 using JobScraper.Core.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -136,13 +137,53 @@ public class WantedScraper(ILogger<WantedScraper> logger) : IJobScraper
         return jobDetail;
     }
 
-    public Task<Company> GetCompanyAsync(string companyId)
+    public async Task<Company> GetCompanyAsync(string companyId)
     {
-        // TODO: 실제 원티드 회사 정보 크롤링 구현
-        throw new NotImplementedException();
+        var id = companyId.Split("::").Last();
+        var request = new HttpRequestMessage(HttpMethod.Get, $"https://www.wanted.co.kr/company/{id}");
+        var referer = $"https://www.wanted.co.kr/company/{id}";
+        SetupHeaders(request, referer);
+        var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            logger.LogError("WantedScraper returned error code {ResponseStatusCode}", response.StatusCode);
+            throw new HttpRequestException($"Failed to fetch company details: {response.ReasonPhrase}");
+        }
+        var content = await response.Content.ReadAsStringAsync();
+        var doc = new HtmlAgilityPack.HtmlDocument();
+        doc.LoadHtml(content);
+        var jsonString = doc.QuerySelector("#__NEXT_DATA__")?.InnerText;
+        if (string.IsNullOrEmpty(jsonString))
+        {
+            logger.LogError("No company data found in the response.");
+            throw new InvalidOperationException("No company data found in the response.");
+        }
+        var json = JObject.Parse(jsonString);
+        var data = json["props"]?["pageProps"]?["dehydrateState"]?["queries"]?[0]?["state"]?["data"];
+        if (data == null)
+        {
+            logger.LogError("No company data found in the response.");
+            throw new InvalidOperationException("No company data found in the response.");
+        }
+        var foundedYear = data["foundedYear"]?.Value<int?>();
+        var company = new Company()
+        {
+            Id = null,
+            Name = data["name"]?.ToString() ?? throw new InvalidOperationException(),
+            SourceCompanyId = "wanted::" + (data["wantedCompanyId"]?.ToString() ?? throw new InvalidOperationException()),
+            Address = data["address"]?["full_location"]?.ToString(),
+            ImageUrl = data["logo"]?.ToString(),
+            Latitude = data["address"]?["geo_location"]?["location"]?["lat"]?.ToObject<decimal>(),
+            Longitude = data["address"]?["geo_location"]?["location"]?["lng"]?.ToObject<decimal>(),
+            EstablishedDate = foundedYear.HasValue 
+                ? new DateTime(foundedYear.Value, 1, 1) 
+                : null
+        };
+        
+        return company;
     }
     
-    private void SetupHeaders(HttpRequestMessage request, string referer)
+    private static void SetupHeaders(HttpRequestMessage request, string referer)
     {
         request.Headers.Clear();
         request.Headers.Add("Connection", "keep-alive");

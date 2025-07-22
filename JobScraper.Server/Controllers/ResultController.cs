@@ -167,19 +167,20 @@ public class ResultController : ControllerBase
             }
 
             // JobDetail의 Id를 JobListing의 데이터베이스 Id로 설정
-            result.JobDetail.Id = existingJobListing.Id;
             result.JobDetail.SourceJobId = sourceJobId;
 
             // 기존 JobDetail이 있는지 확인
-            var existingDetail = await _jobDetailService.GetJobDetailByIdAsync(existingJobListing.Id!.Value);
+            var existingDetail = await _jobDetailService.GetJobDetailByJobListingId(existingJobListing.Id!.Value);
             if (existingDetail != null)
             {
+                result.JobDetail.Id = existingDetail.Id;
                 // 기존 데이터 업데이트
                 await _jobDetailService.UpdateJobDetailAsync(result.JobDetail);
                 _logger.LogInformation("기존 채용 상세정보 업데이트: SourceJobId={sourceJobId}, DatabaseId={id}", sourceJobId, result.JobDetail.Id);
             }
             else
             {
+                // 기존 JobDetail이 없으면 새 데이터 생성
                 // 새 데이터 생성
                 await _jobDetailService.CreateJobDetailAsync(result.JobDetail);
                 _logger.LogInformation("새 채용 상세정보 저장: SourceJobId={sourceJobId}, DatabaseId={id}", sourceJobId, result.JobDetail.Id);
