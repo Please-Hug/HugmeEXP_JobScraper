@@ -289,8 +289,9 @@ public class JobDetailRepository : IJobDetailRepository
             var tagEntities = await _context.Tags
                 .Where(t => tagNames.Contains(t.Name))
                 .ToListAsync();
+            var existingTagNames = new HashSet<string>(tagEntities.Select(e => e.Name));
             var newTagEntities = model.Tags
-                .Where(t => tagEntities.Exists(e => t.Name == e.Name) is false)
+                .Where(t => !existingTagNames.Contains(t.Name))
                 .Select(t => new TagEntity { Name = t.Name })
                 .ToList();
             
