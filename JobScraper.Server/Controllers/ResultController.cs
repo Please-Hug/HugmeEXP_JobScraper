@@ -143,30 +143,52 @@ public class ResultController : ControllerBase
                 result.JobDetail.RequiredSkills = processedSkills.ToList();
             }
 
-            // JobDetail이 이미 존재하는지 확인
-            if (!result.JobDetail.Id.HasValue)
+            
+            if (result.JobDetail.SourceJobId == null)
             {
-                _logger.LogWarning("받은 채용 상세정보에 ID가 없음");
+                _logger.LogWarning("받은 채용 상세정보에 SourceJobId가 없음");
                 return;
             }
             
-            var existingDetail = await _jobDetailService.GetJobDetailByIdAsync(result.JobDetail.Id.Value);
+            var sourceJobId = result.JobDetail.SourceJobId;
+
+            if (string.IsNullOrEmpty(sourceJobId))
+            {
+                _logger.LogWarning("받은 채용 상세정보에 SourceJobId가 없음");
+                return;
+            }
+
+            // SourceJobId로 기존 JobListing 찾기
+            var existingJobListing = await _jobListingService.GetJobListingBySourceJobIdAsync(sourceJobId);
+            if (existingJobListing == null)
+            {
+                _logger.LogWarning("SourceJobId {sourceJobId}에 해당하는 JobListing을 찾을 수 없음", sourceJobId);
+                return;
+            }
+
+            // JobDetail의 Id를 JobListing의 데이터베이스 Id로 설정
+            result.JobDetail.Id = existingJobListing.Id;
+            result.JobDetail.SourceJobId = sourceJobId;
+
+            // 기존 JobDetail이 있는지 확인
+            var existingDetail = await _jobDetailService.GetJobDetailByIdAsync(existingJobListing.Id!.Value);
             if (existingDetail != null)
             {
                 // 기존 데이터 업데이트
                 await _jobDetailService.UpdateJobDetailAsync(result.JobDetail);
-                _logger.LogInformation("기존 채용 상세정보 업데이트: {id}", result.JobDetail.Id);
+                _logger.LogInformation("기존 채용 상세정보 업데이트: SourceJobId={sourceJobId}, DatabaseId={id}", sourceJobId, result.JobDetail.Id);
             }
             else
             {
                 // 새 데이터 생성
                 await _jobDetailService.CreateJobDetailAsync(result.JobDetail);
-                _logger.LogInformation("새 채용 상세정보 저장: {id}", result.JobDetail.Id);
+                _logger.LogInformation("새 채용 상세정보 저장: SourceJobId={sourceJobId}, DatabaseId={id}", sourceJobId, result.JobDetail.Id);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "채용 상세정보 저장 실패: {id}", result.JobDetail.Id);
+            _logger.LogError(ex, "채용 상세정보 저장 실패: {jobDetailInfo}", 
+                result.JobDetail.SourceJobId ?? result.JobDetail.Id?.ToString() ?? "Unknown");
             throw;
         }
     }
@@ -185,7 +207,12 @@ public class ResultController : ControllerBase
         try
         {
             // 기존 회사 정보가 있는지 확인
-            var existingCompany = await _companyService.GetByNameAsync(result.Company.Name);
+            if (string.IsNullOrEmpty(result.Company.SourceCompanyId))
+            {
+                _logger.LogWarning("받은 회사 정보에 SourceCompanyId가 없음: {companyName}", result.Company.Name);
+                return;
+            }
+            var existingCompany = await _companyService.GetBySourceCompanyIdAsync(result.Company.SourceCompanyId);
             if (existingCompany != null)
             {
                 // 기존 회사 정보 업데이트 (새로운 정보로)

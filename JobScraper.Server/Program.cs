@@ -29,11 +29,13 @@ builder.Services.AddDbContext<JobScraperDbContext>(options =>
 builder.Services.AddScoped<IJobListingRepository, JobListingRepository>();
 builder.Services.AddScoped<IJobDetailRepository, JobDetailRepository>();
 builder.Services.AddScoped<ISkillRepository, SkillRepository>();
+builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
 
 // Service DI 설정
 builder.Services.AddScoped<IJobListingService, JobListingService>();
 builder.Services.AddScoped<IJobDetailService, JobDetailService>();
 builder.Services.AddScoped<ISkillService, SkillService>();
+builder.Services.AddScoped<ICompanyService, CompanyService>();
 
 // RabbitMQ 클라이언트 설정
 builder.Services.AddSingleton<IQueueClient>(_ =>
