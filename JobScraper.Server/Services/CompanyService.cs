@@ -73,4 +73,66 @@ public class CompanyService : ICompanyService
 
         return await _companyRepository.AddAsync(newCompany);
     }
+
+    // 회사 정보를 포괄적으로 처리하는 새 메서드 추가
+    public async Task<Company> GetOrCreateCompanyAsync(Company companyInfo)
+    {
+        var existingCompany = await _companyRepository.GetByNameAsync(companyInfo.Name);
+        if (existingCompany != null)
+        {
+            // 기존 회사 정보 업데이트 (새로운 정보가 있는 경우)
+            bool needsUpdate = false;
+
+            if (!string.IsNullOrEmpty(companyInfo.ImageUrl) && existingCompany.ImageUrl != companyInfo.ImageUrl)
+            {
+                existingCompany.ImageUrl = companyInfo.ImageUrl;
+                needsUpdate = true;
+            }
+
+            if (!string.IsNullOrEmpty(companyInfo.Address) && existingCompany.Address != companyInfo.Address)
+            {
+                existingCompany.Address = companyInfo.Address;
+                needsUpdate = true;
+            }
+
+            if (companyInfo.Latitude.HasValue && existingCompany.Latitude != companyInfo.Latitude)
+            {
+                existingCompany.Latitude = companyInfo.Latitude;
+                needsUpdate = true;
+            }
+
+            if (companyInfo.Longitude.HasValue && existingCompany.Longitude != companyInfo.Longitude)
+            {
+                existingCompany.Longitude = companyInfo.Longitude;
+                needsUpdate = true;
+            }
+
+            if (companyInfo.EstablishedDate.HasValue && existingCompany.EstablishedDate != companyInfo.EstablishedDate)
+            {
+                existingCompany.EstablishedDate = companyInfo.EstablishedDate;
+                needsUpdate = true;
+            }
+
+            if (needsUpdate)
+            {
+                return await _companyRepository.UpdateAsync(existingCompany);
+            }
+
+            return existingCompany;
+        }
+
+        // 새 회사 생성
+        var newCompany = new Company
+        {
+            Id = 0, // EF will generate the ID
+            Name = companyInfo.Name,
+            Address = companyInfo.Address,
+            ImageUrl = companyInfo.ImageUrl,
+            Latitude = companyInfo.Latitude,
+            Longitude = companyInfo.Longitude,
+            EstablishedDate = companyInfo.EstablishedDate
+        };
+
+        return await _companyRepository.AddAsync(newCompany);
+    }
 }

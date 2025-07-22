@@ -7,6 +7,7 @@ public class JobDetail : JobListing
     public required long MinSalary { get; set; }
     public required long MaxSalary { get; set; }
     public required string Location { get; set; }
+    public DateTime? DueDate { get; set; }  // 채용 마감일
     
     // 추가된 필드들
     public string? Education { get; set; }  // 학력
