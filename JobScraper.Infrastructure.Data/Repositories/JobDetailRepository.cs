@@ -108,8 +108,9 @@ public class JobDetailRepository : IJobDetailRepository
                 entity.Tags.Add(tagEntity);
             }
             
+            var existingTagNames = new HashSet<string>(tagEntities.Select(e => e.Name));
             var newTagEntities = jobDetail.Tags
-                .Where(t => tagEntities.Exists(e => t.Name == e.Name) is false)
+                .Where(t => !existingTagNames.Contains(t.Name))
                 .Select(t => new TagEntity { Name = t.Name })
                 .ToList();
 
