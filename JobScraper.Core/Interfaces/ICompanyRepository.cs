@@ -11,4 +11,6 @@ public interface ICompanyRepository
     Task<Company> UpdateAsync(Company company);
     Task DeleteAsync(int id);
     Task<bool> ExistsAsync(int id);
+    Task<Company?> SearchByNameAsync(string trim);
+    Task<Company?> GetBySourceCompanyIdAsync(string sourceCompanyId);
 }

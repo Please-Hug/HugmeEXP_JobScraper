@@ -154,11 +154,7 @@ public class CompanyController : ControllerBase
             }
 
             // 이름으로 부분 검색 (향후 더 정교한 검색 로직으로 확장 가능)
-            var companies = await _companyService.GetAllAsync();
-            var filteredCompanies = companies.Where(c => 
-                c.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                (c.Address != null && c.Address.Contains(query, StringComparison.OrdinalIgnoreCase))
-            );
+            var filteredCompanies = await _companyService.SearchByNameAsync(query);
 
             return Ok(filteredCompanies);
         }

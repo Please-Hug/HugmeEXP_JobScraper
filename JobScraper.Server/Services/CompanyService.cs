@@ -77,8 +77,18 @@ public class CompanyService : ICompanyService
     // SourceCompanyId로 회사를 조회하는 메서드 추가
     public async Task<Company?> GetBySourceCompanyIdAsync(string sourceCompanyId)
     {
-        var companies = await _companyRepository.GetAllAsync();
-        return companies.FirstOrDefault(c => c.SourceCompanyId == sourceCompanyId);
+        var company = await _companyRepository.GetBySourceCompanyIdAsync(sourceCompanyId);
+        return company;
+    }
+
+    public Task<Company?> SearchByNameAsync(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return Task.FromResult<Company?>(null);
+        }
+        
+        return _companyRepository.SearchByNameAsync(query.Trim());
     }
 
     // 회사 정보를 포괄적으로 처리하는 새 메서드 추가

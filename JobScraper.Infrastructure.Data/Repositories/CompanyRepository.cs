@@ -73,6 +73,22 @@ public class CompanyRepository : ICompanyRepository
     {
         return await _context.Companies.AnyAsync(c => c.Id == id);
     }
+
+    public Task<Company?> SearchByNameAsync(string trim)
+    {
+        return _context.Companies
+            .Where(c => c.Name.Contains(trim))
+            .Select(c => c.ToModel())
+            .FirstOrDefaultAsync();
+    }
+
+    public Task<Company?> GetBySourceCompanyIdAsync(string sourceCompanyId)
+    {
+        return _context.Companies
+            .Where(c => c.SourceCompanyId == sourceCompanyId)
+            .Select(c => c.ToModel())
+            .FirstOrDefaultAsync();
+    }
 }
 
 // Extension methods for mapping between Company and CompanyEntity
