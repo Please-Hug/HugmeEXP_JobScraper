@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace JobScraper.Server.Controllers;
 
+/// <summary>
+/// 스크래핑 결과 수신 및 처리 컨트롤러
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class ResultController : ControllerBase
@@ -30,6 +33,9 @@ public class ResultController : ControllerBase
         _logger = logger;
     }
 
+    /// <summary>
+    /// 봇으로부터 스크래핑 결과를 수신
+    /// </summary>
     [HttpPost("scraping-result")]
     public async Task<ActionResult> ReceiveScrapingResult([FromBody] ScrapingResult result)
     {
@@ -73,6 +79,9 @@ public class ResultController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// 채용공고 목록 스크래핑 결과 처리
+    /// </summary>
     private async Task ProcessJobListingsResult(ScrapingResult result)
     {
         if (result.JobListings == null || !result.JobListings.Any())
@@ -112,6 +121,9 @@ public class ResultController : ControllerBase
         _logger.LogInformation("채용공고 목록 처리 완료: 저장={processed}, 스킵={skipped}", processedCount, skippedCount);
     }
 
+    /// <summary>
+    /// 채용공고 상세정보 스크래핑 결과 처리
+    /// </summary>
     private async Task ProcessJobDetailResult(ScrapingResult result)
     {
         if (result.JobDetail == null)
@@ -122,10 +134,9 @@ public class ResultController : ControllerBase
 
         try
         {
-            // 스킬 정보가 있다면 먼저 처리
+            // 스킬 정보 처리
             if (result.JobDetail.RequiredSkills?.Any() == true)
             {
-                // 스킬명을 영문명 또는 한글명에서 추출 (우선 영문명 사용, 없으면 한글명)
                 var skillNames = result.JobDetail.RequiredSkills.Select(s => 
                     !string.IsNullOrEmpty(s.EnglishName) ? s.EnglishName : s.KoreanName);
                 var processedSkills = await _skillService.GetOrCreateSkillsAsync(skillNames);
@@ -133,7 +144,13 @@ public class ResultController : ControllerBase
             }
 
             // JobDetail이 이미 존재하는지 확인
-            var existingDetail = await _jobDetailService.GetJobDetailByIdAsync(result.JobDetail.Id);
+            if (!result.JobDetail.Id.HasValue)
+            {
+                _logger.LogWarning("받은 채용 상세정보에 ID가 없음");
+                return;
+            }
+            
+            var existingDetail = await _jobDetailService.GetJobDetailByIdAsync(result.JobDetail.Id.Value);
             if (existingDetail != null)
             {
                 // 기존 데이터 업데이트
@@ -154,6 +171,9 @@ public class ResultController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// 회사 정보 스크래핑 결과 처리
+    /// </summary>
     private async Task ProcessCompanyResult(ScrapingResult result)
     {
         if (result.Company == null)

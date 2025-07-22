@@ -49,6 +49,22 @@ public class JobListingController : ControllerBase
         return Ok(jobListing);
     }
 
+    [HttpGet("by-source-job-id")]
+    public async Task<ActionResult<JobListing>> GetJobListingBySourceJobId([FromQuery] string sourceJobId)
+    {
+        if (string.IsNullOrEmpty(sourceJobId))
+        {
+            return BadRequest("SourceJobId is required");
+        }
+
+        var jobListing = await _jobListingService.GetJobListingBySourceJobIdAsync(sourceJobId);
+        if (jobListing == null)
+        {
+            return NotFound();
+        }
+        return Ok(jobListing);
+    }
+
     [HttpGet("by-source/{source}")]
     public async Task<ActionResult<IEnumerable<JobListing>>> GetJobListingsBySource(string source)
     {
@@ -73,9 +89,9 @@ public class JobListingController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult<JobListing>> UpdateJobListing(int id, [FromBody] JobListing jobListing)
     {
-        if (id != jobListing.Id)
+        if (!jobListing.Id.HasValue || id != jobListing.Id.Value)
         {
-            return BadRequest("ID mismatch");
+            return BadRequest("ID mismatch or missing JobListing ID");
         }
 
         try

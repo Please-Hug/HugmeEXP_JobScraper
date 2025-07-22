@@ -27,8 +27,13 @@ public class JobDetailRepository : IJobDetailRepository
 
     public async Task<JobDetail> CreateAsync(JobDetail jobDetail)
     {
+        if (!jobDetail.Id.HasValue)
+        {
+            throw new ArgumentException("JobDetail ID is required for creation.");
+        }
+        
         var entity = await MapToEntityAsync(jobDetail);
-        entity.JobListingId = jobDetail.Id; // FK 설정
+        entity.JobListingId = jobDetail.Id.Value; // 이미 HasValue로 체크했으므로 안전
         _context.JobDetails.Add(entity);
         await _context.SaveChangesAsync();
         
@@ -129,12 +134,15 @@ public class JobDetailRepository : IJobDetailRepository
         return new JobDetail
         {
             Id = entity.Id,
+            SourceJobId = entity.JobListing.SourceJobId,  // 누락된 필드 추가
             Title = entity.JobListing.Title,
             Company = new Company
             {
                 Id = entity.JobListing.Company.Id,
                 Name = entity.JobListing.Company.Name,
+                SourceCompanyId = entity.JobListing.Company.SourceCompanyId,  // 누락된 필드 추가
                 Address = entity.JobListing.Company.Address,
+                ImageUrl = entity.JobListing.Company.ImageUrl,  // 누락된 필드 추가
                 Latitude = entity.JobListing.Company.Latitude,
                 Longitude = entity.JobListing.Company.Longitude,
                 EstablishedDate = entity.JobListing.Company.EstablishedDate
@@ -166,15 +174,20 @@ public class JobDetailRepository : IJobDetailRepository
 
     private async Task<JobDetailEntity> MapToEntityAsync(JobDetail model)
     {
+        if (!model.Id.HasValue)
+        {
+            throw new ArgumentException("JobDetail ID is required", nameof(model));
+        }
+        
         // JobListing을 먼저 찾아옴
-        var jobListing = await _context.JobListings.FindAsync(model.Id);
+        var jobListing = await _context.JobListings.FindAsync(model.Id.Value);
         if (jobListing == null)
             throw new ArgumentException($"JobListing with Id {model.Id} not found", nameof(model));
 
         var entity = new JobDetailEntity
         {
-            JobListingId = model.Id,
-            JobListing = jobListing, // required 프로퍼티 설정
+            JobListingId = model.Id.Value, // 이미 HasValue로 체크했으므로 안전
+            JobListing = jobListing,
             Description = model.Description,
             MinSalary = model.MinSalary,
             MaxSalary = model.MaxSalary,

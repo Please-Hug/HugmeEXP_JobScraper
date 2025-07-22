@@ -26,7 +26,12 @@ public class JobDetailService : IJobDetailService
 
     public async Task<JobDetail> UpdateJobDetailAsync(JobDetail jobDetail)
     {
-        var existing = await _jobDetailRepository.GetByIdAsync(jobDetail.Id);
+        if (!jobDetail.Id.HasValue)
+        {
+            throw new ArgumentException("JobDetail ID is required for update operation.");
+        }
+        
+        var existing = await _jobDetailRepository.GetByIdAsync(jobDetail.Id.Value);
         if (existing == null)
         {
             throw new ArgumentException($"JobDetail with ID {jobDetail.Id} not found.");
