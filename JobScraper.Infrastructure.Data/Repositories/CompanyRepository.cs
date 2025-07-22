@@ -52,6 +52,8 @@ public class CompanyRepository : ICompanyRepository
         entity.Latitude = company.Latitude;
         entity.Longitude = company.Longitude;
         entity.EstablishedDate = company.EstablishedDate;
+        entity.ImageUrl = company.ImageUrl;
+        entity.SourceCompanyId = company.SourceCompanyId;
 
         await _context.SaveChangesAsync();
         return entity.ToModel();
@@ -85,7 +87,9 @@ public static class CompanyMappingExtensions
             Address = entity.Address,
             Latitude = entity.Latitude,
             Longitude = entity.Longitude,
-            EstablishedDate = entity.EstablishedDate
+            EstablishedDate = entity.EstablishedDate,
+            ImageUrl = entity.ImageUrl,
+            SourceCompanyId = entity.SourceCompanyId
         };
     }
 
@@ -98,7 +102,9 @@ public static class CompanyMappingExtensions
             Address = model.Address,
             Latitude = model.Latitude,
             Longitude = model.Longitude,
-            EstablishedDate = model.EstablishedDate
+            EstablishedDate = model.EstablishedDate,
+            ImageUrl = model.ImageUrl,
+            SourceCompanyId = model.SourceCompanyId
         };
     }
 }

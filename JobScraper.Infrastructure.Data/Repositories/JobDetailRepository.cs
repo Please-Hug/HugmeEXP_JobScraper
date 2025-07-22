@@ -60,6 +60,7 @@ public class JobDetailRepository : IJobDetailRepository
         entity.Benefits = jobDetail.Benefits;
         entity.LocationLatitude = jobDetail.LocationLatitude;
         entity.LocationLongitude = jobDetail.LocationLongitude;
+        entity.DueDate = jobDetail.DueDate;
 
         // 스킬 관계 업데이트 - N+1 문제 해결
         entity.RequiredSkills.Clear();
@@ -158,7 +159,8 @@ public class JobDetailRepository : IJobDetailRepository
             PreferredQualifications = entity.PreferredQualifications,
             Benefits = entity.Benefits,
             LocationLatitude = entity.LocationLatitude,
-            LocationLongitude = entity.LocationLongitude
+            LocationLongitude = entity.LocationLongitude,
+            DueDate = entity.DueDate
         };
     }
 
@@ -185,7 +187,8 @@ public class JobDetailRepository : IJobDetailRepository
             Benefits = model.Benefits,
             LocationLatitude = model.LocationLatitude,
             LocationLongitude = model.LocationLongitude,
-            RequiredSkills = new List<SkillEntity>()
+            RequiredSkills = new List<SkillEntity>(),
+            DueDate = model.DueDate
         };
 
         // 스킬 엔티티들을 찾아서 연결 - N+1 문제 해결

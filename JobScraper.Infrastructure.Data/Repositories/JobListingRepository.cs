@@ -100,7 +100,9 @@ public class JobListingRepository : IJobListingRepository
                 Address = entity.Company.Address,
                 Latitude = entity.Company.Latitude,
                 Longitude = entity.Company.Longitude,
-                EstablishedDate = entity.Company.EstablishedDate
+                EstablishedDate = entity.Company.EstablishedDate,
+                ImageUrl = entity.Company.ImageUrl,
+                SourceCompanyId = entity.Company.SourceCompanyId
             },
             Url = entity.Url,
             Source = entity.Source
@@ -121,7 +123,9 @@ public class JobListingRepository : IJobListingRepository
                 Address = model.Company.Address,
                 Latitude = model.Company.Latitude,
                 Longitude = model.Company.Longitude,
-                EstablishedDate = model.Company.EstablishedDate
+                EstablishedDate = model.Company.EstablishedDate,
+                ImageUrl = model.Company.ImageUrl,
+                SourceCompanyId = model.Company.SourceCompanyId
             },
             Url = model.Url,
             Source = model.Source
