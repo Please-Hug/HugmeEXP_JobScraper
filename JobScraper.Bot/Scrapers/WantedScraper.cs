@@ -6,12 +6,21 @@ using Newtonsoft.Json.Linq;
 
 namespace JobScraper.Bot.Scrapers;
 
-public class WantedScraper(ILogger<WantedScraper> logger) : IJobScraper
+public class WantedScraper : IJobScraper
 {
-    private readonly HttpClient _httpClient = new HttpClient();
+    private readonly ILogger<WantedScraper> _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
+
+    public WantedScraper(ILogger<WantedScraper> logger, IHttpClientFactory httpClientFactory)
+    {
+        _logger = logger;
+        _httpClientFactory = httpClientFactory;
+    }
+
     public async Task<IEnumerable<JobListing>> GetJobListingsAsync(JobSearchParameters parameters)
     {
-        logger.LogInformation("Getting Job Listings");
+        var httpClient = _httpClientFactory.CreateClient("Wanted");
+        _logger.LogInformation("Getting Job Listings");
         var sortBy = parameters.SortBy switch
         {
             "latest" => "job.latest_order",
@@ -34,10 +43,10 @@ public class WantedScraper(ILogger<WantedScraper> logger) : IJobScraper
                       $"&locations={parameters.Location}";
         SetupHeaders(request, referer);
         
-        var response = await _httpClient.SendAsync(request);
+        var response = await httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
         {
-            logger.LogError("WantedScraper returned error code {ResponseStatusCode}", response.StatusCode);
+            _logger.LogError("WantedScraper returned error code {ResponseStatusCode}", response.StatusCode);
             throw new HttpRequestException($"Failed to fetch job listings: {response.ReasonPhrase}");
         }
         var content = await response.Content.ReadAsStringAsync();
@@ -47,7 +56,7 @@ public class WantedScraper(ILogger<WantedScraper> logger) : IJobScraper
         var results = json["data"];
         if (results == null)
         {
-            logger.LogInformation("No job listings found in the response.");
+            _logger.LogInformation("No job listings found in the response.");
             throw new InvalidOperationException("No job listings found in the response.");
         }
         
@@ -77,7 +86,7 @@ public class WantedScraper(ILogger<WantedScraper> logger) : IJobScraper
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Error processing job listings");
+                _logger.LogWarning(ex, "Error processing job listings");
             }
         }
         return jobListings;
@@ -85,14 +94,15 @@ public class WantedScraper(ILogger<WantedScraper> logger) : IJobScraper
 
     public async Task<JobDetail> GetJobDetailAsync(string jobId)
     {
+        var httpClient = _httpClientFactory.CreateClient("Wanted");
         var id = jobId.Split("::").Last();
         var request = new HttpRequestMessage(HttpMethod.Get, $"https://www.wanted.co.kr/api/chaos/jobs/v4/{id}/details?{DateTime.Now.Ticks}=");
         var referer = $"https://www.wanted.co.kr/wd/{id}";
         SetupHeaders(request, referer);
-        var response = await _httpClient.SendAsync(request);
+        var response = await httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
         {
-            logger.LogError("WantedScraper returned error code {ResponseStatusCode}", response.StatusCode);
+            _logger.LogError("WantedScraper returned error code {ResponseStatusCode}", response.StatusCode);
             throw new HttpRequestException($"Failed to fetch job details: {response.ReasonPhrase}");
         }
         var content = await response.Content.ReadAsStringAsync();
@@ -125,7 +135,7 @@ public class WantedScraper(ILogger<WantedScraper> logger) : IJobScraper
                 Id = 0,
                 EnglishName = s["text"]?.ToString() ?? throw new InvalidOperationException(),
                 KoreanName = s["text"]?.ToString() ?? throw new InvalidOperationException(),
-                IconUrl = ""
+                IconUrl = null
             }).ToList() ?? [],
             Title = data?["job"]?["detail"]?["position"]?.ToString() ?? throw new InvalidOperationException(),
             Url = $"https://www.wanted.co.kr/wd/{id}",
@@ -139,14 +149,15 @@ public class WantedScraper(ILogger<WantedScraper> logger) : IJobScraper
 
     public async Task<Company> GetCompanyAsync(string companyId)
     {
+        var httpClient = _httpClientFactory.CreateClient("Wanted");
         var id = companyId.Split("::").Last();
         var request = new HttpRequestMessage(HttpMethod.Get, $"https://www.wanted.co.kr/company/{id}");
         var referer = $"https://www.wanted.co.kr/company/{id}";
         SetupHeaders(request, referer);
-        var response = await _httpClient.SendAsync(request);
+        var response = await httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)
         {
-            logger.LogError("WantedScraper returned error code {ResponseStatusCode}", response.StatusCode);
+            _logger.LogError("WantedScraper returned error code {ResponseStatusCode}", response.StatusCode);
             throw new HttpRequestException($"Failed to fetch company details: {response.ReasonPhrase}");
         }
         var content = await response.Content.ReadAsStringAsync();
@@ -155,14 +166,14 @@ public class WantedScraper(ILogger<WantedScraper> logger) : IJobScraper
         var jsonString = doc.QuerySelector("#__NEXT_DATA__")?.InnerText;
         if (string.IsNullOrEmpty(jsonString))
         {
-            logger.LogError("No company data found in the response.");
+            _logger.LogError("No company data found in the response.");
             throw new InvalidOperationException("No company data found in the response.");
         }
         var json = JObject.Parse(jsonString);
         var data = json["props"]?["pageProps"]?["dehydrateState"]?["queries"]?[0]?["state"]?["data"];
         if (data == null)
         {
-            logger.LogError("No company data found in the response.");
+            _logger.LogError("No company data found in the response.");
             throw new InvalidOperationException("No company data found in the response.");
         }
         var foundedYear = data["foundedYear"]?.Value<int?>();

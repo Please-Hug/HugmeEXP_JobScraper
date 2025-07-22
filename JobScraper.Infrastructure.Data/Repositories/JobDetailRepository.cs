@@ -216,20 +216,21 @@ public class JobDetailRepository : IJobDetailRepository
         };
 
         // 스킬 엔티티들을 찾아서 연결 - N+1 문제 해결
-        if (model.RequiredSkills.Count != 0)
-        {
-            var skillIds = model.RequiredSkills.Select(s => s.Id).ToList();
-            if (skillIds.Count > 0)
-            {
-                var skillEntities = await _context.Skills
-                    .Where(s => skillIds.Contains(s.Id))
-                    .ToListAsync();
+        if (model.RequiredSkills.Count == 0)
+            return entity;
+        
+        var skillIds = model.RequiredSkills.Select(s => s.Id).ToList();
+        
+        if (skillIds.Count <= 0)
+            return entity;
+        
+        var skillEntities = await _context.Skills
+            .Where(s => skillIds.Contains(s.Id))
+            .ToListAsync();
 
-                foreach (var skillEntity in skillEntities)
-                {
-                    entity.RequiredSkills.Add(skillEntity);
-                }
-            }
+        foreach (var skillEntity in skillEntities)
+        {
+            entity.RequiredSkills.Add(skillEntity);
         }
 
         return entity;

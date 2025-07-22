@@ -166,9 +166,6 @@ public class ResultController : ControllerBase
                 return;
             }
 
-            // JobDetail의 Id를 JobListing의 데이터베이스 Id로 설정
-            result.JobDetail.SourceJobId = sourceJobId;
-
             // 기존 JobDetail이 있는지 확인
             var existingDetail = await _jobDetailService.GetJobDetailByJobListingId(existingJobListing.Id!.Value);
             if (existingDetail != null)
