@@ -266,8 +266,9 @@ public class JobDetailRepository : IJobDetailRepository
             var skillEntities = await _context.Skills
                 .Where(s => skilNames.Contains(s.Name))
                 .ToListAsync();
+            var existingSkillNames = new HashSet<string>(skillEntities.Select(e => e.Name));
             var newSkillEntities = model.RequiredSkills
-                .Where(s => skillEntities.Exists(e => s.Name == e.Name) is false)
+                .Where(s => !existingSkillNames.Contains(s.Name))
                 .Select(s => new SkillEntity { Name = s.Name, IconUrl = s.IconUrl })
                 .ToList();
 
