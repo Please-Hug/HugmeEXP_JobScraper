@@ -6,4 +6,5 @@ public interface IJobScraper
 {
     Task<IEnumerable<JobListing>> GetJobListingsAsync(JobSearchParameters parameters);
     Task<JobDetail> GetJobDetailAsync(string jobId);
+    Task<Company> GetCompanyAsync(string companyId);
 }

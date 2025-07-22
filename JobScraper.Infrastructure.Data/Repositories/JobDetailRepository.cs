@@ -19,6 +19,7 @@ public class JobDetailRepository : IJobDetailRepository
         var entity = await _context.JobDetails
             .Include(jd => jd.RequiredSkills)
             .Include(jd => jd.JobListing)
+                .ThenInclude(jl => jl.Company)
             .FirstOrDefaultAsync(jd => jd.Id == id);
         
         return entity != null ? MapToModel(entity) : null;
@@ -50,6 +51,16 @@ public class JobDetailRepository : IJobDetailRepository
         entity.MinSalary = jobDetail.MinSalary;
         entity.MaxSalary = jobDetail.MaxSalary;
         entity.Location = jobDetail.Location;
+        
+        // 새로 추가된 필드들 업데이트
+        entity.Education = jobDetail.Education;
+        entity.Experience = jobDetail.Experience;
+        entity.Requirements = jobDetail.Requirements;
+        entity.PreferredQualifications = jobDetail.PreferredQualifications;
+        entity.Benefits = jobDetail.Benefits;
+        entity.LocationLatitude = jobDetail.LocationLatitude;
+        entity.LocationLongitude = jobDetail.LocationLongitude;
+        entity.DueDate = jobDetail.DueDate;
 
         // 스킬 관계 업데이트 - N+1 문제 해결
         entity.RequiredSkills.Clear();
@@ -119,18 +130,37 @@ public class JobDetailRepository : IJobDetailRepository
         {
             Id = entity.Id,
             Title = entity.JobListing.Title,
-            Company = entity.JobListing.Company,
+            Company = new Company
+            {
+                Id = entity.JobListing.Company.Id,
+                Name = entity.JobListing.Company.Name,
+                Address = entity.JobListing.Company.Address,
+                Latitude = entity.JobListing.Company.Latitude,
+                Longitude = entity.JobListing.Company.Longitude,
+                EstablishedDate = entity.JobListing.Company.EstablishedDate
+            },
             Url = entity.JobListing.Url,
             Source = entity.JobListing.Source,
             Description = entity.Description,
             RequiredSkills = entity.RequiredSkills.Select(s => new Skill
             {
                 Id = s.Id,
-                Name = s.Name
+                EnglishName = s.EnglishName,
+                KoreanName = s.KoreanName,
+                IconUrl = s.IconUrl
             }).ToList(),
             MinSalary = entity.MinSalary,
             MaxSalary = entity.MaxSalary,
-            Location = entity.Location
+            Location = entity.Location,
+            // 새로 추가된 필드들
+            Education = entity.Education,
+            Experience = entity.Experience,
+            Requirements = entity.Requirements,
+            PreferredQualifications = entity.PreferredQualifications,
+            Benefits = entity.Benefits,
+            LocationLatitude = entity.LocationLatitude,
+            LocationLongitude = entity.LocationLongitude,
+            DueDate = entity.DueDate
         };
     }
 
@@ -149,7 +179,16 @@ public class JobDetailRepository : IJobDetailRepository
             MinSalary = model.MinSalary,
             MaxSalary = model.MaxSalary,
             Location = model.Location,
-            RequiredSkills = new List<SkillEntity>()
+            // 새로 추가된 필드들
+            Education = model.Education,
+            Experience = model.Experience,
+            Requirements = model.Requirements,
+            PreferredQualifications = model.PreferredQualifications,
+            Benefits = model.Benefits,
+            LocationLatitude = model.LocationLatitude,
+            LocationLongitude = model.LocationLongitude,
+            RequiredSkills = new List<SkillEntity>(),
+            DueDate = model.DueDate
         };
 
         // 스킬 엔티티들을 찾아서 연결 - N+1 문제 해결

@@ -1,5 +1,6 @@
 ﻿using JobScraper.Core.Interfaces;
 using JobScraper.Core.Models;
+using System.Linq;
 
 namespace JobScraper.Server.Services;
 
@@ -29,11 +30,18 @@ public class SkillService : ISkillService
 
     public async Task<Skill> CreateSkillAsync(Skill skill)
     {
-        // 중복 이름 체크
-        var existing = await _skillRepository.GetByNameAsync(skill.Name);
-        if (existing != null)
+        // 중복 영문명 또는 한글명 체크
+        var existingByEnglish = await _skillRepository.GetByNameAsync(skill.EnglishName);
+        var existingByKorean = await _skillRepository.GetByNameAsync(skill.KoreanName);
+        
+        if (existingByEnglish != null)
         {
-            throw new InvalidOperationException($"Skill with name '{skill.Name}' already exists.");
+            throw new InvalidOperationException($"Skill with English name '{skill.EnglishName}' already exists.");
+        }
+        
+        if (existingByKorean != null)
+        {
+            throw new InvalidOperationException($"Skill with Korean name '{skill.KoreanName}' already exists.");
         }
 
         return await _skillRepository.CreateAsync(skill);
@@ -68,13 +76,21 @@ public class SkillService : ISkillService
             return existing;
         }
 
+        // 스킬명이 영어인지 한국어인지 판단하여 적절한 필드에 할당
         var newSkill = new Skill
         {
             Id = 0, // 새로운 스킬이므로 0으로 설정
-            Name = skillName
+            EnglishName = IsEnglish(skillName) ? skillName : skillName, // 임시로 같은 값 할당
+            KoreanName = IsEnglish(skillName) ? skillName : skillName   // 실제로는 번역 로직이 필요
         };
 
         return await _skillRepository.CreateAsync(newSkill);
+    }
+
+    private static bool IsEnglish(string text)
+    {
+        // 간단한 영어 판별 로직 (ASCII 문자 기준)
+        return text.All(c => c <= 127);
     }
 
     public async Task<IEnumerable<Skill>> GetOrCreateSkillsAsync(IEnumerable<string> skillNames)

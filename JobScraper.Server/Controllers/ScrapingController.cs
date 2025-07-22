@@ -81,6 +81,37 @@ public class ScrapingController : ControllerBase
         }
     }
 
+    [HttpPost("start-company")]
+    public async Task<ActionResult> StartCompanyScraping([FromBody] StartCompanyScrapingRequest request)
+    {
+        if (string.IsNullOrEmpty(request.Source) || string.IsNullOrEmpty(request.CompanyId))
+        {
+            return BadRequest("Source and CompanyId are required");
+        }
+
+        var command = new ScrapingCommand
+        {
+            Id = Guid.NewGuid(),
+            Source = request.Source,
+            Type = CommandType.GetCompany,
+            CompanyId = request.CompanyId,
+            Timestamp = DateTime.UtcNow
+        };
+
+        try
+        {
+            await _queueClient.SendCommandAsync(command);
+            _logger.LogInformation("Company scraping command sent: {commandId} for company {companyId}", command.Id, command.CompanyId);
+            
+            return Ok(new { CommandId = command.Id, Message = "Company scraping started successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send company scraping command for company {companyId}", request.CompanyId);
+            return StatusCode(500, "Failed to start company scraping");
+        }
+    }
+
     [HttpPost("start-bulk-scraping")]
     public async Task<ActionResult> StartBulkScraping([FromBody] BulkScrapingRequest request)
     {
@@ -133,6 +164,12 @@ public class StartJobDetailScrapingRequest
 {
     public required string Source { get; set; }
     public required string JobId { get; set; }
+}
+
+public class StartCompanyScrapingRequest
+{
+    public required string Source { get; set; }
+    public required string CompanyId { get; set; }
 }
 
 public class BulkScrapingRequest

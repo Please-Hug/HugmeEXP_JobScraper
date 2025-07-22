@@ -12,17 +12,20 @@ public class ResultController : ControllerBase
 {
     private readonly IJobListingService _jobListingService;
     private readonly IJobDetailService _jobDetailService;
+    private readonly ICompanyService _companyService;
     private readonly ISkillService _skillService;
     private readonly ILogger<ResultController> _logger;
 
     public ResultController(
         IJobListingService jobListingService,
         IJobDetailService jobDetailService,
+        ICompanyService companyService,
         ISkillService skillService,
         ILogger<ResultController> logger)
     {
         _jobListingService = jobListingService;
         _jobDetailService = jobDetailService;
+        _companyService = companyService;
         _skillService = skillService;
         _logger = logger;
     }
@@ -49,6 +52,10 @@ public class ResultController : ControllerBase
 
                 case CommandType.GetJobDetail:
                     await ProcessJobDetailResult(result);
+                    break;
+
+                case CommandType.GetCompany:
+                    await ProcessCompanyResult(result);
                     break;
 
                 default:
@@ -93,11 +100,11 @@ public class ResultController : ControllerBase
                 // 새 채용공고 저장
                 await _jobListingService.CreateJobListingAsync(listing);
                 processedCount++;
-                _logger.LogDebug("새 채용공고 저장: {title} - {company}", listing.Title, listing.Company);
+                _logger.LogDebug("새 채용공고 저장: {title} - {company}", listing.Title, listing.Company.Name);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "채용공고 저장 실패: {title} - {company}", listing.Title, listing.Company);
+                _logger.LogError(ex, "채용공고 저장 실패: {title} - {company}", listing.Title, listing.Company.Name);
                 skippedCount++;
             }
         }
@@ -118,7 +125,9 @@ public class ResultController : ControllerBase
             // 스킬 정보가 있다면 먼저 처리
             if (result.JobDetail.RequiredSkills?.Any() == true)
             {
-                var skillNames = result.JobDetail.RequiredSkills.Select(s => s.Name);
+                // 스킬명을 영문명 또는 한글명에서 추출 (우선 영문명 사용, 없으면 한글명)
+                var skillNames = result.JobDetail.RequiredSkills.Select(s => 
+                    !string.IsNullOrEmpty(s.EnglishName) ? s.EnglishName : s.KoreanName);
                 var processedSkills = await _skillService.GetOrCreateSkillsAsync(skillNames);
                 result.JobDetail.RequiredSkills = processedSkills.ToList();
             }
@@ -141,6 +150,38 @@ public class ResultController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "채용 상세정보 저장 실패: {id}", result.JobDetail.Id);
+            throw;
+        }
+    }
+
+    private async Task ProcessCompanyResult(ScrapingResult result)
+    {
+        if (result.Company == null)
+        {
+            _logger.LogWarning("받은 회사 정보가 null임");
+            return;
+        }
+
+        try
+        {
+            // 기존 회사 정보가 있는지 확인
+            var existingCompany = await _companyService.GetByNameAsync(result.Company.Name);
+            if (existingCompany != null)
+            {
+                // 기존 회사 정보 업데이트 (새로운 정보로)
+                var updatedCompany = await _companyService.GetOrCreateCompanyAsync(result.Company);
+                _logger.LogInformation("기존 회사 정보 업데이트: {name}", result.Company.Name);
+            }
+            else
+            {
+                // 새 회사 정보 생성
+                await _companyService.CreateAsync(result.Company);
+                _logger.LogInformation("새 회사 정보 저장: {name}", result.Company.Name);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "회사 정보 저장 실패: {name}", result.Company.Name);
             throw;
         }
     }
