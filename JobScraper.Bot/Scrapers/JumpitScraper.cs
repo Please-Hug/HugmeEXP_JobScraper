@@ -15,4 +15,10 @@ public class JumpitScraper : IJobScraper
     {
         throw new NotImplementedException();
     }
+
+    public Task<Company> GetCompanyAsync(string companyId)
+    {
+        // TODO: 실제 점핏 회사 정보 크롤링 구현
+        throw new NotImplementedException();
+    }
 }

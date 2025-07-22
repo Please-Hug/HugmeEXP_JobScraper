@@ -9,6 +9,7 @@ public class ScrapingCommand
     public required string Source { get; set; }
     public CommandType Type { get; set; }
     public string? JobId { get; set; }
+    public string? CompanyId { get; set; }
     public JobSearchParameters? SearchParameters { get; set; }
     public DateTime Timestamp { get; set; }
 }

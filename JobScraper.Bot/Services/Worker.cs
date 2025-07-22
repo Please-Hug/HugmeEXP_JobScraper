@@ -94,6 +94,27 @@ public class Worker(
                     // 성공 결과 설정
                     result.SetSuccessDetailResult(detail);
                     break;
+
+                case CommandType.GetCompany:
+                    if (string.IsNullOrEmpty(command.CompanyId))
+                    {
+                        throw new ArgumentException("CompanyId is required for GetCompany command");
+                    }
+                    
+                    // 스크래퍼 선택 및 회사 정보 가져오기
+                    IJobScraper companyScraper = command.Source.ToLower() switch
+                    {
+                        "wanted" => wantedScraper,
+                        "jumpit" => jumpitScraper,
+                        _ => throw new ArgumentException($"Unknown source: {command.Source}")
+                    };
+                
+                    var company = await companyScraper.GetCompanyAsync(command.CompanyId);
+                
+                    // 성공 결과 설정
+                    result.SetSuccessCompanyResult(company);
+                    break;
+
                 default:
                     throw new ArgumentException($"Unknown type: {command.Type}");
             }

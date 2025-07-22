@@ -41,6 +41,9 @@ namespace JobScraper.Core;
         // 직업 상세 정보 결과
         public JobDetail? JobDetail { get; set; }
         
+        // 회사 정보 결과
+        public Company? Company { get; set; }
+        
         // 결과 메타데이터
         public Dictionary<string, string> Metadata { get; set; } = new();
         
@@ -71,6 +74,14 @@ namespace JobScraper.Core;
         {
             Success = true;
             JobDetail = detail;
+            EndTime = DateTime.UtcNow;
+        }
+        
+        // 회사 정보 성공 결과를 생성하는 헬퍼 메서드
+        public void SetSuccessCompanyResult(Company company)
+        {
+            Success = true;
+            Company = company;
             EndTime = DateTime.UtcNow;
         }
         

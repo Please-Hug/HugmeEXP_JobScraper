@@ -67,6 +67,10 @@ namespace JobScraper.Infrastructure.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
+                    b.Property<string>("SourceCompanyId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.HasKey("Id");
 
                     b.ToTable("Companies");

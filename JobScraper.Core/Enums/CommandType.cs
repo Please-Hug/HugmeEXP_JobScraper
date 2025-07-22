@@ -3,5 +3,6 @@
 public enum CommandType
 {
     GetJobListings,
-    GetJobDetail
+    GetJobDetail,
+    GetCompany
 }

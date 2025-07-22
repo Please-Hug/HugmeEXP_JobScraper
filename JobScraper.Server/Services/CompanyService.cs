@@ -74,14 +74,40 @@ public class CompanyService : ICompanyService
         return await _companyRepository.AddAsync(newCompany);
     }
 
+    // SourceCompanyId로 회사를 조회하는 메서드 추가
+    public async Task<Company?> GetBySourceCompanyIdAsync(string sourceCompanyId)
+    {
+        var companies = await _companyRepository.GetAllAsync();
+        return companies.FirstOrDefault(c => c.SourceCompanyId == sourceCompanyId);
+    }
+
     // 회사 정보를 포괄적으로 처리하는 새 메서드 추가
     public async Task<Company> GetOrCreateCompanyAsync(Company companyInfo)
     {
-        var existingCompany = await _companyRepository.GetByNameAsync(companyInfo.Name);
+        Company? existingCompany = null;
+
+        // 먼저 SourceCompanyId로 조회 시도
+        if (!string.IsNullOrEmpty(companyInfo.SourceCompanyId))
+        {
+            existingCompany = await GetBySourceCompanyIdAsync(companyInfo.SourceCompanyId);
+        }
+
+        // SourceCompanyId로 찾지 못했다면 이름으로 조회
+        if (existingCompany == null)
+        {
+            existingCompany = await _companyRepository.GetByNameAsync(companyInfo.Name);
+        }
+
         if (existingCompany != null)
         {
             // 기존 회사 정보 업데이트 (새로운 정보가 있는 경우)
             bool needsUpdate = false;
+
+            if (!string.IsNullOrEmpty(companyInfo.SourceCompanyId) && existingCompany.SourceCompanyId != companyInfo.SourceCompanyId)
+            {
+                existingCompany.SourceCompanyId = companyInfo.SourceCompanyId;
+                needsUpdate = true;
+            }
 
             if (!string.IsNullOrEmpty(companyInfo.ImageUrl) && existingCompany.ImageUrl != companyInfo.ImageUrl)
             {
@@ -126,6 +152,7 @@ public class CompanyService : ICompanyService
         {
             Id = 0, // EF will generate the ID
             Name = companyInfo.Name,
+            SourceCompanyId = companyInfo.SourceCompanyId,
             Address = companyInfo.Address,
             ImageUrl = companyInfo.ImageUrl,
             Latitude = companyInfo.Latitude,

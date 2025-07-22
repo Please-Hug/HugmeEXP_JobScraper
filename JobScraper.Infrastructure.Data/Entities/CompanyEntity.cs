@@ -10,6 +10,9 @@ public class CompanyEntity
     [MaxLength(200)]
     public required string Name { get; set; }
     
+    [MaxLength(100)]
+    public string? SourceCompanyId { get; set; }  // 원본 사이트의 회사 ID
+    
     [MaxLength(500)]
     public string? Address { get; set; }
     
