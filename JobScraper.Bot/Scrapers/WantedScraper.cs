@@ -1,5 +1,6 @@
 ﻿using JobScraper.Core.Interfaces;
 using JobScraper.Core.Models;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace JobScraper.Bot.Scrapers;
@@ -78,13 +79,61 @@ public class WantedScraper(ILogger<WantedScraper> logger) : IJobScraper
                 logger.LogWarning(ex, "Error processing job listings");
             }
         }
-        
         return jobListings;
     }
 
-    public Task<JobDetail> GetJobDetailAsync(string jobId)
+    public async Task<JobDetail> GetJobDetailAsync(string jobId)
     {
-        throw new NotImplementedException();
+        var id = jobId.Split("::").Last();
+        var request = new HttpRequestMessage(HttpMethod.Get, $"https://www.wanted.co.kr/api/chaos/jobs/v4/{id}/details?{DateTime.Now.Ticks}=");
+        var referer = $"https://www.wanted.co.kr/wd/{id}";
+        SetupHeaders(request, referer);
+        var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            logger.LogError("WantedScraper returned error code {ResponseStatusCode}", response.StatusCode);
+            throw new HttpRequestException($"Failed to fetch job details: {response.ReasonPhrase}");
+        }
+        var content = await response.Content.ReadAsStringAsync();
+        var json = JObject.Parse(content);
+        var data = json["data"];
+
+        var jobDetail = new JobDetail()
+        {
+            Benefits = data?["job"]?["detail"]?["benefits"]?.ToString(),
+            Company = new Company()
+            {
+                ImageUrl = data?["job"]?["company"]?["logo_img"]?["origin"]?.ToString(),
+                Name = data?["job"]?["company"]?["name"]?.ToString() ?? throw new InvalidOperationException(),
+                SourceCompanyId = "wanted::" +
+                                  (data["job"]?["company"]?["id"]?.ToString() ?? throw new InvalidOperationException()),
+            },
+            Description = data?["job"]?["detail"]?["intro"]?.ToString() ?? throw new InvalidOperationException(),
+            Id = null,
+            DueDate = data?["job"]?["due_time"]?.ToObject<DateTime?>(),
+            Education = "0", // 원티드에는 학력 정보가 없음
+            Experience = data?["job"]?["annual_from"]?.ToString() ?? throw new InvalidOperationException(),
+            Location = data?["job"]?["address"]?["full_location"]?.ToString() ?? throw new InvalidOperationException(),
+            LocationLatitude = data?["job"]?["address"]?["geo_location"]?["location"]?["lat"]?.ToObject<decimal?>(),
+            LocationLongitude = data?["job"]?["address"]?["geo_location"]?["location"]?["lng"]?.ToObject<decimal?>(),
+            MinSalary = 0,
+            MaxSalary = 0,
+            Source = "wanted",
+            RequiredSkills = data?["job"]?["skill_tags"]?.Select(s => new Skill()
+            {
+                Id = 0,
+                EnglishName = s["text"]?.ToString() ?? throw new InvalidOperationException(),
+                KoreanName = s["text"]?.ToString() ?? throw new InvalidOperationException(),
+                IconUrl = ""
+            }).ToList() ?? [],
+            Title = data?["job"]?["detail"]?["position"]?.ToString() ?? throw new InvalidOperationException(),
+            Url = $"https://www.wanted.co.kr/wd/{id}",
+            SourceJobId = jobId,
+            PreferredQualifications = data["job"]?["detail"]?["preferred_points"]?.ToString(),
+            Requirements = data["job"]?["detail"]?["requirements"]?.ToString()
+        };
+
+        return jobDetail;
     }
 
     public Task<Company> GetCompanyAsync(string companyId)

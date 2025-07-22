@@ -155,7 +155,7 @@ public class JobDetailRepository : IJobDetailRepository
                 Id = s.Id,
                 EnglishName = s.EnglishName,
                 KoreanName = s.KoreanName,
-                IconUrl = s.IconUrl
+                IconUrl = s.IconUrl,
             }).ToList(),
             MinSalary = entity.MinSalary,
             MaxSalary = entity.MaxSalary,
