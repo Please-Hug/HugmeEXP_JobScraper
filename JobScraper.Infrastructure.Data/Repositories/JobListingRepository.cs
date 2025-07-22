@@ -66,91 +66,7 @@ public class JobListingRepository : IJobListingRepository
     /// </summary>
     public async Task<JobListing> CreateAsync(JobListing jobListing)
     {
-        // SourceCompanyId 우선 확인 후 이름으로 보조 확인
-        CompanyEntity? existingCompany = null;
-        
-        if (!string.IsNullOrEmpty(jobListing.Company.SourceCompanyId))
-        {
-            existingCompany = await _context.Companies
-                .FirstOrDefaultAsync(c => c.SourceCompanyId == jobListing.Company.SourceCompanyId);
-        }
-        
-        if (existingCompany == null)
-        {
-            existingCompany = await _context.Companies
-                .FirstOrDefaultAsync(c => c.Name == jobListing.Company.Name);
-        }
-        
-        if (existingCompany == null)
-        {
-            // 새 회사 생성
-            var companyEntity = new CompanyEntity
-            {
-                Id = 0,
-                Name = jobListing.Company.Name,
-                SourceCompanyId = jobListing.Company.SourceCompanyId,
-                Address = jobListing.Company.Address,
-                ImageUrl = jobListing.Company.ImageUrl,
-                Latitude = jobListing.Company.Latitude,
-                Longitude = jobListing.Company.Longitude,
-                EstablishedDate = jobListing.Company.EstablishedDate
-            };
-            _context.Companies.Add(companyEntity);
-            await _context.SaveChangesAsync();
-            existingCompany = companyEntity;
-        }
-        else
-        {
-            // 기존 회사 정보 업데이트 (더 완전한 정보가 있다면)
-            var needsUpdate = false;
-            
-            if (!string.IsNullOrEmpty(jobListing.Company.SourceCompanyId) && 
-                existingCompany.SourceCompanyId != jobListing.Company.SourceCompanyId)
-            {
-                existingCompany.SourceCompanyId = jobListing.Company.SourceCompanyId;
-                needsUpdate = true;
-            }
-            
-            if (!string.IsNullOrEmpty(jobListing.Company.ImageUrl) && 
-                existingCompany.ImageUrl != jobListing.Company.ImageUrl)
-            {
-                existingCompany.ImageUrl = jobListing.Company.ImageUrl;
-                needsUpdate = true;
-            }
-            
-            if (!string.IsNullOrEmpty(jobListing.Company.Address) && 
-                existingCompany.Address != jobListing.Company.Address)
-            {
-                existingCompany.Address = jobListing.Company.Address;
-                needsUpdate = true;
-            }
-            
-            if (jobListing.Company.Latitude.HasValue && 
-                existingCompany.Latitude != jobListing.Company.Latitude)
-            {
-                existingCompany.Latitude = jobListing.Company.Latitude;
-                needsUpdate = true;
-            }
-            
-            if (jobListing.Company.Longitude.HasValue && 
-                existingCompany.Longitude != jobListing.Company.Longitude)
-            {
-                existingCompany.Longitude = jobListing.Company.Longitude;
-                needsUpdate = true;
-            }
-            
-            if (jobListing.Company.EstablishedDate.HasValue && 
-                existingCompany.EstablishedDate != jobListing.Company.EstablishedDate)
-            {
-                existingCompany.EstablishedDate = jobListing.Company.EstablishedDate;
-                needsUpdate = true;
-            }
-            
-            if (needsUpdate)
-            {
-                await _context.SaveChangesAsync();
-            }
-        }
+        var existingCompany = await GetOrCreateCompanyAsync(jobListing.Company);
         
         var entity = new JobListingEntity
         {
@@ -169,6 +85,116 @@ public class JobListingRepository : IJobListingRepository
         jobListing.Id = entity.Id;
         jobListing.Company.Id = existingCompany.Id;
         return jobListing;
+    }
+
+    /// <summary>
+    /// 회사를 찾거나 새로 생성합니다
+    /// </summary>
+    private async Task<CompanyEntity> GetOrCreateCompanyAsync(Company company)
+    {
+        var existingCompany = await FindExistingCompanyAsync(company);
+        
+        if (existingCompany == null)
+        {
+            return await CreateNewCompanyAsync(company);
+        }
+        
+        await UpdateCompanyIfNeededAsync(existingCompany, company);
+        return existingCompany;
+    }
+
+    /// <summary>
+    /// 기존 회사를 찾습니다 (SourceCompanyId 우선, 이름으로 보조)
+    /// </summary>
+    private async Task<CompanyEntity?> FindExistingCompanyAsync(Company company)
+    {
+        if (!string.IsNullOrEmpty(company.SourceCompanyId))
+        {
+            var companyBySourceId = await _context.Companies
+                .FirstOrDefaultAsync(c => c.SourceCompanyId == company.SourceCompanyId);
+            if (companyBySourceId != null)
+                return companyBySourceId;
+        }
+        
+        return await _context.Companies
+            .FirstOrDefaultAsync(c => c.Name == company.Name);
+    }
+
+    /// <summary>
+    /// 새 회사를 생성합니다
+    /// </summary>
+    private async Task<CompanyEntity> CreateNewCompanyAsync(Company company)
+    {
+        var companyEntity = new CompanyEntity
+        {
+            Id = 0,
+            Name = company.Name,
+            SourceCompanyId = company.SourceCompanyId,
+            Address = company.Address,
+            ImageUrl = company.ImageUrl,
+            Latitude = company.Latitude,
+            Longitude = company.Longitude,
+            EstablishedDate = company.EstablishedDate
+        };
+        
+        _context.Companies.Add(companyEntity);
+        await _context.SaveChangesAsync();
+        return companyEntity;
+    }
+
+    /// <summary>
+    /// 기존 회사 정보를 필요시 업데이트합니다
+    /// </summary>
+    private async Task UpdateCompanyIfNeededAsync(CompanyEntity existingCompany, Company newCompanyData)
+    {
+        var needsUpdate = false;
+        
+        if (!string.IsNullOrEmpty(newCompanyData.SourceCompanyId) && 
+            existingCompany.SourceCompanyId != newCompanyData.SourceCompanyId)
+        {
+            existingCompany.SourceCompanyId = newCompanyData.SourceCompanyId;
+            needsUpdate = true;
+        }
+        
+        if (!string.IsNullOrEmpty(newCompanyData.ImageUrl) && 
+            existingCompany.ImageUrl != newCompanyData.ImageUrl)
+        {
+            existingCompany.ImageUrl = newCompanyData.ImageUrl;
+            needsUpdate = true;
+        }
+        
+        if (!string.IsNullOrEmpty(newCompanyData.Address) && 
+            existingCompany.Address != newCompanyData.Address)
+        {
+            existingCompany.Address = newCompanyData.Address;
+            needsUpdate = true;
+        }
+        
+        if (newCompanyData.Latitude.HasValue && 
+            existingCompany.Latitude != newCompanyData.Latitude)
+        {
+            existingCompany.Latitude = newCompanyData.Latitude;
+            needsUpdate = true;
+        }
+        
+        if (newCompanyData.Longitude.HasValue && 
+            existingCompany.Longitude != newCompanyData.Longitude)
+        {
+            existingCompany.Longitude = newCompanyData.Longitude;
+            needsUpdate = true;
+        }
+        
+        if (newCompanyData.EstablishedDate.HasValue && 
+            existingCompany.EstablishedDate != newCompanyData.EstablishedDate)
+        {
+            existingCompany.EstablishedDate = newCompanyData.EstablishedDate;
+            needsUpdate = true;
+        }
+        
+        if (needsUpdate)
+        {
+            await _context.SaveChangesAsync();
+        }
     }
 
     /// <summary>
