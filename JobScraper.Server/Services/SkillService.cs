@@ -31,17 +31,11 @@ public class SkillService : ISkillService
     public async Task<Skill> CreateSkillAsync(Skill skill)
     {
         // 중복 영문명 또는 한글명 체크
-        var existingByEnglish = await _skillRepository.GetByNameAsync(skill.EnglishName);
-        var existingByKorean = await _skillRepository.GetByNameAsync(skill.KoreanName);
+        var existingByName = await _skillRepository.GetByNameAsync(skill.Name);
         
-        if (existingByEnglish != null)
+        if (existingByName != null)
         {
-            throw new InvalidOperationException($"Skill with English name '{skill.EnglishName}' already exists.");
-        }
-        
-        if (existingByKorean != null)
-        {
-            throw new InvalidOperationException($"Skill with Korean name '{skill.KoreanName}' already exists.");
+            throw new InvalidOperationException($"Skill with name '{skill.Name}' already exists.");
         }
 
         return await _skillRepository.CreateAsync(skill);
@@ -80,17 +74,10 @@ public class SkillService : ISkillService
         var newSkill = new Skill
         {
             Id = 0, // 새로운 스킬이므로 0으로 설정
-            EnglishName = IsEnglish(skillName) ? skillName : skillName, // 임시로 같은 값 할당
-            KoreanName = IsEnglish(skillName) ? skillName : skillName   // 실제로는 번역 로직이 필요
+            Name = skillName
         };
 
         return await _skillRepository.CreateAsync(newSkill);
-    }
-
-    private static bool IsEnglish(string text)
-    {
-        // 간단한 영어 판별 로직 (ASCII 문자 기준)
-        return text.All(c => c <= 127);
     }
 
     public async Task<IEnumerable<Skill>> GetOrCreateSkillsAsync(IEnumerable<string> skillNames)

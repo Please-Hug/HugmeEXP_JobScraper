@@ -20,7 +20,9 @@ public class JobListingEntity
     public required int CompanyId { get; set; }
     public required CompanyEntity Company { get; set; }
     
+    [MaxLength(1000)]
     public required string Url { get; set; }
+    [MaxLength(50)] // 추후 열거형으로 변경 가능
     public required string Source { get; set; }
     
     public JobDetailEntity? JobDetail { get; set; }

@@ -17,6 +17,7 @@ public class ResultController : ControllerBase
     private readonly IJobDetailService _jobDetailService;
     private readonly ICompanyService _companyService;
     private readonly ISkillService _skillService;
+    private readonly ITagService _tagService;
     private readonly ILogger<ResultController> _logger;
 
     public ResultController(
@@ -24,12 +25,14 @@ public class ResultController : ControllerBase
         IJobDetailService jobDetailService,
         ICompanyService companyService,
         ISkillService skillService,
+        ITagService tagService,
         ILogger<ResultController> logger)
     {
         _jobListingService = jobListingService;
         _jobDetailService = jobDetailService;
         _companyService = companyService;
         _skillService = skillService;
+        _tagService = tagService;
         _logger = logger;
     }
 
@@ -134,16 +137,6 @@ public class ResultController : ControllerBase
 
         try
         {
-            // 스킬 정보 처리
-            if (result.JobDetail.RequiredSkills?.Any() == true)
-            {
-                var skillNames = result.JobDetail.RequiredSkills.Select(s => 
-                    !string.IsNullOrEmpty(s.EnglishName) ? s.EnglishName : s.KoreanName);
-                var processedSkills = await _skillService.GetOrCreateSkillsAsync(skillNames);
-                result.JobDetail.RequiredSkills = processedSkills.ToList();
-            }
-
-            
             if (result.JobDetail.SourceJobId == null)
             {
                 _logger.LogWarning("받은 채용 상세정보에 SourceJobId가 없음");

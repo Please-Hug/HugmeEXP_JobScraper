@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace JobScraper.Infrastructure.Data.Entities;
 
@@ -22,7 +23,10 @@ public class CompanyEntity
   [MaxLength(1000)]
   public string? ImageUrl { get; set; }
   
+  [Column(TypeName = "decimal(10, 8)")]
   public decimal? Latitude { get; set; }
+  
+  [Column(TypeName = "decimal(11, 8)")]
   public decimal? Longitude { get; set; }
   public DateTime? EstablishedDate { get; set; }
   

@@ -46,6 +46,7 @@ public class JobDetailRepository : IJobDetailRepository
     {
         var entity = await _context.JobDetails
             .Include(jd => jd.RequiredSkills)
+            .Include(jd => jd.Tags)
             .FirstOrDefaultAsync(jd => jd.Id == jobDetail.Id);
         
         if (entity == null)
@@ -69,17 +70,51 @@ public class JobDetailRepository : IJobDetailRepository
 
         // 스킬 관계 업데이트 - N+1 문제 해결
         entity.RequiredSkills.Clear();
+        entity.Tags.Clear();
         
-        if (jobDetail.RequiredSkills.Count != 0)
+        if (jobDetail.RequiredSkills.Count > 0)
         {
-            var skillIds = jobDetail.RequiredSkills.Select(s => s.Id).ToList();
+            var skilNames = jobDetail.RequiredSkills.Select(s => s.Name).ToList();
             var skillEntities = await _context.Skills
-                .Where(s => skillIds.Contains(s.Id))
+                .Where(s => skilNames.Contains(s.Name))
                 .ToListAsync();
 
             foreach (var skillEntity in skillEntities)
             {
                 entity.RequiredSkills.Add(skillEntity);
+            }
+            
+            var newSkillEntities = jobDetail.RequiredSkills
+                .Where(s => skillEntities.Exists(e => s.Name == e.Name) is false)
+                .Select(s => new SkillEntity { Name = s.Name, IconUrl = s.IconUrl })
+                .ToList();
+
+            foreach (var newSkillEntity in newSkillEntities)
+            {
+                entity.RequiredSkills.Add(newSkillEntity);
+            }
+        }
+
+        if (jobDetail.Tags.Count > 0)
+        {
+            var tagNames = jobDetail.Tags.Select(t => t.Name).ToList();
+            var tagEntities = await _context.Tags
+                .Where(t => tagNames.Contains(t.Name))
+                .ToListAsync();
+
+            foreach (var tagEntity in tagEntities)
+            {
+                entity.Tags.Add(tagEntity);
+            }
+            
+            var newTagEntities = jobDetail.Tags
+                .Where(t => tagEntities.Exists(e => t.Name == e.Name) is false)
+                .Select(t => new TagEntity { Name = t.Name })
+                .ToList();
+
+            foreach (var newTagEntity in newTagEntities)
+            {
+                entity.Tags.Add(newTagEntity);
             }
         }
 
@@ -133,6 +168,7 @@ public class JobDetailRepository : IJobDetailRepository
     {
         var entity = await _context.JobDetails
             .Include(jd => jd.RequiredSkills)
+            .Include(jd => jd.Tags)
             .Include(jd => jd.JobListing)
                 .ThenInclude(jl => jl.Company)
             .FirstOrDefaultAsync(jd => jd.JobListingId == id);
@@ -164,8 +200,7 @@ public class JobDetailRepository : IJobDetailRepository
             RequiredSkills = entity.RequiredSkills.Select(s => new Skill
             {
                 Id = s.Id,
-                EnglishName = s.EnglishName,
-                KoreanName = s.KoreanName,
+                Name = s.Name,
                 IconUrl = s.IconUrl,
             }).ToList(),
             MinSalary = entity.MinSalary,
@@ -179,7 +214,12 @@ public class JobDetailRepository : IJobDetailRepository
             Benefits = entity.Benefits,
             LocationLatitude = entity.LocationLatitude,
             LocationLongitude = entity.LocationLongitude,
-            DueDate = entity.DueDate
+            DueDate = entity.DueDate,
+            Tags = entity.Tags.Select(t => new Tag
+            {
+                Id = t.Id,
+                Name = t.Name
+            }).ToList()
         };
     }
 
@@ -212,26 +252,58 @@ public class JobDetailRepository : IJobDetailRepository
             LocationLatitude = model.LocationLatitude,
             LocationLongitude = model.LocationLongitude,
             RequiredSkills = new List<SkillEntity>(),
-            DueDate = model.DueDate
+            DueDate = model.DueDate,
+            Tags = new List<TagEntity>()
         };
 
-        // 스킬 엔티티들을 찾아서 연결 - N+1 문제 해결
-        if (model.RequiredSkills.Count == 0)
-            return entity;
-        
-        var skillIds = model.RequiredSkills.Select(s => s.Id).ToList();
-        
-        if (skillIds.Count <= 0)
-            return entity;
-        
-        var skillEntities = await _context.Skills
-            .Where(s => skillIds.Contains(s.Id))
-            .ToListAsync();
-
-        foreach (var skillEntity in skillEntities)
+        // 스킬 엔티티들을 찾아서 연결
+        if (model.RequiredSkills.Count > 0)
         {
-            entity.RequiredSkills.Add(skillEntity);
+            var skilNames = model.RequiredSkills.Select(s => s.Name).ToList();
+            
+            var skillEntities = await _context.Skills
+                .Where(s => skilNames.Contains(s.Name))
+                .ToListAsync();
+            var newSkillEntities = model.RequiredSkills
+                .Where(s => skillEntities.Exists(e => s.Name == e.Name) is false)
+                .Select(s => new SkillEntity { Name = s.Name, IconUrl = s.IconUrl })
+                .ToList();
+
+            foreach (var skillEntity in skillEntities)
+            {
+                entity.RequiredSkills.Add(skillEntity);
+            }
+
+            foreach (var newSkillEntity in newSkillEntities)
+            {
+                entity.RequiredSkills.Add(newSkillEntity);
+            }
         }
+
+        if (model.Tags.Count > 0)
+        {
+            var tagNames = model.Tags.Select(t => t.Name).ToList();
+            
+            var tagEntities = await _context.Tags
+                .Where(t => tagNames.Contains(t.Name))
+                .ToListAsync();
+            var newTagEntities = model.Tags
+                .Where(t => tagEntities.Exists(e => t.Name == e.Name) is false)
+                .Select(t => new TagEntity { Name = t.Name })
+                .ToList();
+            
+            foreach (var tagEntity in tagEntities) 
+            {
+                entity.Tags.Add(tagEntity);
+            }
+
+
+            foreach (var newTagEntity in newTagEntities)
+            {
+                entity.Tags.Add(newTagEntity);
+            }
+        }
+        
 
         return entity;
     }

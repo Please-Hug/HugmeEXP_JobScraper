@@ -1,7 +1,6 @@
 ﻿using HtmlAgilityPack.CssSelectors.NetCore;
 using JobScraper.Core.Interfaces;
 using JobScraper.Core.Models;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace JobScraper.Bot.Scrapers;
@@ -119,30 +118,37 @@ public class WantedScraper : IJobScraper
                 SourceCompanyId = "wanted::" +
                                   (data["job"]?["company"]?["id"]?.ToString() ?? throw new InvalidOperationException()),
             },
-            Description = data?["job"]?["detail"]?["intro"]?.ToString() ?? throw new InvalidOperationException(),
+            Description = data["job"]?["detail"]?["intro"]?.ToString() ?? throw new InvalidOperationException(),
             Id = null,
-            DueDate = data?["job"]?["due_time"]?.ToObject<DateTime?>(),
-            Education = "0", // 원티드에는 학력 정보가 없음
-            Experience = data?["job"]?["annual_from"]?.ToString() ?? throw new InvalidOperationException(),
-            Location = data?["job"]?["address"]?["full_location"]?.ToString() ?? throw new InvalidOperationException(),
-            LocationLatitude = data?["job"]?["address"]?["geo_location"]?["location"]?["lat"]?.ToObject<decimal?>(),
-            LocationLongitude = data?["job"]?["address"]?["geo_location"]?["location"]?["lng"]?.ToObject<decimal?>(),
+            DueDate = data["job"]?["due_time"]?.ToObject<DateTime?>(),
+            Education = 0, // 원티드에는 학력 정보가 없음
+            Experience = data["job"]?["annual_from"]?.Value<int>() ?? throw new InvalidOperationException(),
+            Location = data["job"]?["address"]?["full_location"]?.ToString() ?? throw new InvalidOperationException(),
+            LocationLatitude = data["job"]?["address"]?["geo_location"]?["location"]?["lat"]?.ToObject<decimal?>(),
+            LocationLongitude = data["job"]?["address"]?["geo_location"]?["location"]?["lng"]?.ToObject<decimal?>(),
             MinSalary = 0,
             MaxSalary = 0,
             Source = "wanted",
-            RequiredSkills = data?["job"]?["skill_tags"]?.Select(s => new Skill()
+            RequiredSkills = data["job"]?["skill_tags"]?.Select(s => new Skill()
             {
                 Id = 0,
-                EnglishName = s["text"]?.ToString() ?? throw new InvalidOperationException(),
-                KoreanName = s["text"]?.ToString() ?? throw new InvalidOperationException(),
+                Name = s["text"]?.ToString() ?? throw new InvalidOperationException(),
                 IconUrl = null
             }).ToList() ?? [],
-            Title = data?["job"]?["detail"]?["position"]?.ToString() ?? throw new InvalidOperationException(),
+            Title = data["job"]?["detail"]?["position"]?.ToString() ?? throw new InvalidOperationException(),
             Url = $"https://www.wanted.co.kr/wd/{id}",
             SourceJobId = jobId,
             PreferredQualifications = data["job"]?["detail"]?["preferred_points"]?.ToString(),
-            Requirements = data["job"]?["detail"]?["requirements"]?.ToString()
+            Requirements = data["job"]?["detail"]?["requirements"]?.ToString(),
+            Tags = data["job"]?["attraction_tags"]?.Select(t => new Tag()
+            {
+                Name = t["title"]?.ToString() ?? string.Empty,
+            }).ToList() ?? []
         };
+        jobDetail.Tags = jobDetail.Tags
+            .Where(t => !string.IsNullOrEmpty(t.Name))
+            .DistinctBy(t => t.Name)
+            .ToList();
 
         return jobDetail;
     }

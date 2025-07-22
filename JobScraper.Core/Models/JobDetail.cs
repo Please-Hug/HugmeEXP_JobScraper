@@ -17,11 +17,13 @@ public class JobDetail : JobListing
     public DateTime? DueDate { get; set; }
     
     // 추가 상세 정보
-    public string? Education { get; set; }
-    public string? Experience { get; set; }
+    public int? Education { get; set; }
+    public int? Experience { get; set; }
     public string? Requirements { get; set; }
     public string? PreferredQualifications { get; set; }
     public string? Benefits { get; set; }
     public decimal? LocationLatitude { get; set; }
     public decimal? LocationLongitude { get; set; }
+    
+    public ICollection<Tag> Tags { get; set; } = new List<Tag>();
 }
