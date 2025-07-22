@@ -22,7 +22,7 @@ public class TagController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Skill>> GetTag(int id)
+    public async Task<ActionResult<Tag>> GetTag(int id)
     {
         var tag = await _tagService.GetByIdAsync(id);
         if (tag == null)
