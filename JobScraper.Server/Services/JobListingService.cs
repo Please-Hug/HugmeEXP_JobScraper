@@ -74,4 +74,9 @@ public class JobListingService : IJobListingService
     {
         return await _jobListingRepository.ExistsAsync(url);
     }
+
+    public Task<IEnumerable<JobListing>> GetAllJobListingsNotHavingDetailsAsync()
+    {
+        return _jobListingRepository.GetAllNotHavingDetailsAsync();
+    }
 }

@@ -89,6 +89,14 @@ public class CompanyRepository : ICompanyRepository
             .Select(c => c.ToModel())
             .FirstOrDefaultAsync();
     }
+
+    public async Task<IEnumerable<Company>> GetAllCompaniesNotHavingDetailsAsync()
+    {
+        return await _context.Companies
+            .Where(c => c.Latitude == null && c.Longitude == null)
+            .Select(c => c.ToModel())
+            .ToListAsync();
+    }
 }
 
 // Extension methods for mapping between Company and CompanyEntity

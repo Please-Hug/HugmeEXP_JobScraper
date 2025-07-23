@@ -249,6 +249,16 @@ public class JobListingRepository : IJobListingRepository
         return await _context.JobListings.AnyAsync(jl => jl.Url == url);
     }
 
+    public async Task<IEnumerable<JobListing>> GetAllNotHavingDetailsAsync()
+    {
+        var entities = await _context.JobListings
+            .Include(jl => jl.Company)
+            .Where(jl => jl.JobDetail == null)
+            .ToListAsync();
+        
+        return entities.Select(MapToModel);
+    }
+
     private static JobListing MapToModel(JobListingEntity entity)
     {
         return new JobListing

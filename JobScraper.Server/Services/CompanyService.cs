@@ -96,6 +96,11 @@ public class CompanyService : ICompanyService
         return _companyRepository.SearchByNameAsync(query.Trim());
     }
 
+    public Task<IEnumerable<Company>> GetAllCompaniesNotHavingDetailsAsync()
+    {
+        return _companyRepository.GetAllCompaniesNotHavingDetailsAsync();
+    }
+
     // 회사 정보를 포괄적으로 처리하는 새 메서드 추가
     public async Task<Company> GetOrCreateCompanyAsync(Company companyInfo)
     {

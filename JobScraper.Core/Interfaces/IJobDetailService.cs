@@ -12,4 +12,5 @@ public interface IJobDetailService
     Task RemoveSkillFromJobAsync(int jobDetailId, int skillId);
     Task<JobDetail> CreateJobDetailWithSkillsAsync(JobDetail jobDetail, IEnumerable<string> skillNames);
     Task<JobDetail?> GetJobDetailByJobListingId(int id);
+    Task<IEnumerable<JobDetail>> GetAllJobDetailsAsync();
 }

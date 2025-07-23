@@ -178,6 +178,18 @@ public class JobDetailRepository : IJobDetailRepository
         return entity != null ? MapToModel(entity) : null;
     }
 
+    public async Task<IEnumerable<JobDetail>> GetAllAsync()
+    {
+        var entities = await _context.JobDetails
+            .Include(jd => jd.RequiredSkills)
+            .Include(jd => jd.Tags)
+            .Include(jd => jd.JobListing)
+            .ThenInclude(jl => jl.Company)
+            .ToListAsync();
+        
+        return entities.Select(MapToModel);
+    }
+
     private JobDetail MapToModel(JobDetailEntity entity)
     {
         return new JobDetail

@@ -13,4 +13,5 @@ public interface ICompanyRepository
     Task<bool> ExistsAsync(int id);
     Task<Company?> SearchByNameAsync(string trim);
     Task<Company?> GetBySourceCompanyIdAsync(string sourceCompanyId);
+    Task<IEnumerable<Company>> GetAllCompaniesNotHavingDetailsAsync();
 }
