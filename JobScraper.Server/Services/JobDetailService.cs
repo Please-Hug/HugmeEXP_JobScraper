@@ -76,4 +76,9 @@ public class JobDetailService : IJobDetailService
         
         return await _jobDetailRepository.GetByJobListingIdAsync(id);
     }
+
+    public Task<IEnumerable<JobDetail>> GetAllJobDetailsAsync()
+    {
+        return _jobDetailRepository.GetAllAsync();
+    }
 }

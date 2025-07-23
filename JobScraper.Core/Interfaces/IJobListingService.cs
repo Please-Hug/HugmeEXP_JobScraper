@@ -13,4 +13,5 @@ public interface IJobListingService
     Task DeleteJobListingAsync(int id);
     Task<IEnumerable<JobListing>> GetJobListingsBySourceAsync(string source);
     Task<bool> JobListingExistsAsync(string url);
+    Task<IEnumerable<JobListing>> GetAllJobListingsNotHavingDetailsAsync();
 }

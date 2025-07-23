@@ -71,7 +71,7 @@ public class JobListingController : ControllerBase
         var jobListings = await _jobListingService.GetJobListingsBySourceAsync(source);
         return Ok(jobListings);
     }
-
+    
     [HttpPost]
     public async Task<ActionResult<JobListing>> CreateJobListing([FromBody] JobListing jobListing)
     {

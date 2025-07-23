@@ -110,7 +110,7 @@ public class WantedScraper : IJobScraper
 
         var jobDetail = new JobDetail()
         {
-            Benefits = data?["job"]?["detail"]?["benefits"]?.ToString(),
+            Benefits = data?["job"]?["detail"]?["benefits"]?.ToString() ?? string.Empty,
             Company = new Company()
             {
                 ImageUrl = data?["job"]?["company"]?["logo_img"]?["origin"]?.ToString(),
@@ -118,14 +118,14 @@ public class WantedScraper : IJobScraper
                 SourceCompanyId = "wanted::" +
                                   (data["job"]?["company"]?["id"]?.ToString() ?? throw new InvalidOperationException()),
             },
-            Description = data["job"]?["detail"]?["intro"]?.ToString() ?? throw new InvalidOperationException(),
+            Description = data["job"]?["detail"]?["intro"]?.ToString() ?? string.Empty,
             Id = null,
             DueDate = data["job"]?["due_time"]?.ToObject<DateTime?>(),
             Education = 0, // 원티드에는 학력 정보가 없음
-            Experience = data["job"]?["annual_from"]?.Value<int>() ?? throw new InvalidOperationException(),
+            Experience = data["job"]?["annual_from"]?.Value<int?>() ?? -1,
             Location = data["job"]?["address"]?["full_location"]?.ToString() ?? throw new InvalidOperationException(),
-            LocationLatitude = data["job"]?["address"]?["geo_location"]?["location"]?["lat"]?.ToObject<decimal?>(),
-            LocationLongitude = data["job"]?["address"]?["geo_location"]?["location"]?["lng"]?.ToObject<decimal?>(),
+            LocationLatitude = (bool)data["job"]?["address"]?["geo_location"]?.HasValues ? data["job"]?["address"]?["geo_location"]?["location"]?["lat"]?.ToObject<decimal?>() : null,
+            LocationLongitude = (bool)data["job"]?["address"]?["geo_location"]?.HasValues ? data["job"]?["address"]?["geo_location"]?["location"]?["lng"]?.ToObject<decimal?>() : null,
             MinSalary = 0,
             MaxSalary = 0,
             Source = "wanted",
@@ -138,8 +138,8 @@ public class WantedScraper : IJobScraper
             Title = data["job"]?["detail"]?["position"]?.ToString() ?? throw new InvalidOperationException(),
             Url = $"https://www.wanted.co.kr/wd/{id}",
             SourceJobId = jobId,
-            PreferredQualifications = data["job"]?["detail"]?["preferred_points"]?.ToString(),
-            Requirements = data["job"]?["detail"]?["requirements"]?.ToString(),
+            PreferredQualifications = data["job"]?["detail"]?["preferred_points"]?.ToString() ?? string.Empty,
+            Requirements = data["job"]?["detail"]?["requirements"]?.ToString() ?? string.Empty,
             Tags = data["job"]?["attraction_tags"]?.Select(t => new Tag()
             {
                 Name = t["title"]?.ToString() ?? string.Empty,

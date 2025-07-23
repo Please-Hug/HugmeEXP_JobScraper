@@ -1,4 +1,5 @@
-﻿using JobScraper.Core.Models;
+﻿using System.Collections;
+using JobScraper.Core.Models;
 
 namespace JobScraper.Core.Interfaces;
 
@@ -14,4 +15,5 @@ public interface ICompanyService
     Task<Company> GetOrCreateCompanyAsync(Company companyInfo);
     Task<Company?> GetBySourceCompanyIdAsync(string sourceCompanyId);
     Task<Company?> SearchByNameAsync(string query);
+    Task<IEnumerable<Company>> GetAllCompaniesNotHavingDetailsAsync();
 }

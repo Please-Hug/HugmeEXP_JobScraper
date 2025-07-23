@@ -13,4 +13,5 @@ public interface IJobListingRepository
     Task DeleteAsync(int id);
     Task<IEnumerable<JobListing>> GetBySourceAsync(string source);
     Task<bool> ExistsAsync(string url);
+    Task<IEnumerable<JobListing>> GetAllNotHavingDetailsAsync();
 }
