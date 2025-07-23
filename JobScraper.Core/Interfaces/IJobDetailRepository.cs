@@ -10,4 +10,5 @@ public interface IJobDetailRepository
     Task DeleteAsync(int id);
     Task AddSkillToJobAsync(int jobDetailId, int skillId);
     Task RemoveSkillFromJobAsync(int jobDetailId, int skillId);
+    Task<JobDetail?> GetByJobListingIdAsync(int id);
 }

@@ -30,7 +30,7 @@ public class SkillRepository : ISkillRepository
     {
         // 영문명 또는 한글명으로 검색
         var entity = await _context.Skills
-            .FirstOrDefaultAsync(s => s.EnglishName == name || s.KoreanName == name);
+            .FirstOrDefaultAsync(s => s.Name == name);
         return entity != null ? MapToModel(entity) : null;
     }
 
@@ -49,8 +49,7 @@ public class SkillRepository : ISkillRepository
         if (entity == null)
             throw new ArgumentException("Skill not found", nameof(skill));
 
-        entity.EnglishName = skill.EnglishName;
-        entity.KoreanName = skill.KoreanName;
+        entity.Name = skill.Name;
         entity.IconUrl = skill.IconUrl;
         await _context.SaveChangesAsync();
         return skill;
@@ -69,7 +68,7 @@ public class SkillRepository : ISkillRepository
     public async Task<bool> ExistsAsync(string name)
     {
         // 영문명 또는 한글명으로 존재 여부 확인
-        return await _context.Skills.AnyAsync(s => s.EnglishName == name || s.KoreanName == name);
+        return await _context.Skills.AnyAsync(s => s.Name == name);
     }
 
     public async Task<IEnumerable<Skill>> GetSkillsByJobDetailIdAsync(int jobDetailId)
@@ -85,8 +84,7 @@ public class SkillRepository : ISkillRepository
         return new Skill
         {
             Id = entity.Id,
-            EnglishName = entity.EnglishName,
-            KoreanName = entity.KoreanName,
+            Name = entity.Name,
             IconUrl = entity.IconUrl
         };
     }
@@ -96,8 +94,7 @@ public class SkillRepository : ISkillRepository
         return new SkillEntity
         {
             Id = model.Id,
-            EnglishName = model.EnglishName,
-            KoreanName = model.KoreanName,
+            Name = model.Name,
             IconUrl = model.IconUrl
         };
     }

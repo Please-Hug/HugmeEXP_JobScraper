@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace JobScraper.Server.Controllers;
 
+/// <summary>
+/// 스크래핑 결과 수신 및 처리 컨트롤러
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class ResultController : ControllerBase
@@ -14,6 +17,7 @@ public class ResultController : ControllerBase
     private readonly IJobDetailService _jobDetailService;
     private readonly ICompanyService _companyService;
     private readonly ISkillService _skillService;
+    private readonly ITagService _tagService;
     private readonly ILogger<ResultController> _logger;
 
     public ResultController(
@@ -21,15 +25,20 @@ public class ResultController : ControllerBase
         IJobDetailService jobDetailService,
         ICompanyService companyService,
         ISkillService skillService,
+        ITagService tagService,
         ILogger<ResultController> logger)
     {
         _jobListingService = jobListingService;
         _jobDetailService = jobDetailService;
         _companyService = companyService;
         _skillService = skillService;
+        _tagService = tagService;
         _logger = logger;
     }
 
+    /// <summary>
+    /// 봇으로부터 스크래핑 결과를 수신
+    /// </summary>
     [HttpPost("scraping-result")]
     public async Task<ActionResult> ReceiveScrapingResult([FromBody] ScrapingResult result)
     {
@@ -73,6 +82,9 @@ public class ResultController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// 채용공고 목록 스크래핑 결과 처리
+    /// </summary>
     private async Task ProcessJobListingsResult(ScrapingResult result)
     {
         if (result.JobListings == null || !result.JobListings.Any())
@@ -112,6 +124,9 @@ public class ResultController : ControllerBase
         _logger.LogInformation("채용공고 목록 처리 완료: 저장={processed}, 스킵={skipped}", processedCount, skippedCount);
     }
 
+    /// <summary>
+    /// 채용공고 상세정보 스크래핑 결과 처리
+    /// </summary>
     private async Task ProcessJobDetailResult(ScrapingResult result)
     {
         if (result.JobDetail == null)
@@ -122,38 +137,56 @@ public class ResultController : ControllerBase
 
         try
         {
-            // 스킬 정보가 있다면 먼저 처리
-            if (result.JobDetail.RequiredSkills?.Any() == true)
+            if (result.JobDetail.SourceJobId == null)
             {
-                // 스킬명을 영문명 또는 한글명에서 추출 (우선 영문명 사용, 없으면 한글명)
-                var skillNames = result.JobDetail.RequiredSkills.Select(s => 
-                    !string.IsNullOrEmpty(s.EnglishName) ? s.EnglishName : s.KoreanName);
-                var processedSkills = await _skillService.GetOrCreateSkillsAsync(skillNames);
-                result.JobDetail.RequiredSkills = processedSkills.ToList();
+                _logger.LogWarning("받은 채용 상세정보에 SourceJobId가 없음");
+                return;
+            }
+            
+            var sourceJobId = result.JobDetail.SourceJobId;
+
+            if (string.IsNullOrEmpty(sourceJobId))
+            {
+                _logger.LogWarning("받은 채용 상세정보에 SourceJobId가 없음");
+                return;
             }
 
-            // JobDetail이 이미 존재하는지 확인
-            var existingDetail = await _jobDetailService.GetJobDetailByIdAsync(result.JobDetail.Id);
+            // SourceJobId로 기존 JobListing 찾기
+            var existingJobListing = await _jobListingService.GetJobListingBySourceJobIdAsync(sourceJobId);
+            if (existingJobListing == null)
+            {
+                _logger.LogWarning("SourceJobId {sourceJobId}에 해당하는 JobListing을 찾을 수 없음", sourceJobId);
+                return;
+            }
+
+            // 기존 JobDetail이 있는지 확인
+            var existingDetail = await _jobDetailService.GetJobDetailByJobListingId(existingJobListing.Id!.Value);
             if (existingDetail != null)
             {
+                result.JobDetail.Id = existingDetail.Id;
                 // 기존 데이터 업데이트
                 await _jobDetailService.UpdateJobDetailAsync(result.JobDetail);
-                _logger.LogInformation("기존 채용 상세정보 업데이트: {id}", result.JobDetail.Id);
+                _logger.LogInformation("기존 채용 상세정보 업데이트: SourceJobId={sourceJobId}, DatabaseId={id}", sourceJobId, result.JobDetail.Id);
             }
             else
             {
+                // 기존 JobDetail이 없으면 새 데이터 생성
                 // 새 데이터 생성
                 await _jobDetailService.CreateJobDetailAsync(result.JobDetail);
-                _logger.LogInformation("새 채용 상세정보 저장: {id}", result.JobDetail.Id);
+                _logger.LogInformation("새 채용 상세정보 저장: SourceJobId={sourceJobId}, DatabaseId={id}", sourceJobId, result.JobDetail.Id);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "채용 상세정보 저장 실패: {id}", result.JobDetail.Id);
+            _logger.LogError(ex, "채용 상세정보 저장 실패: {jobDetailInfo}", 
+                result.JobDetail.SourceJobId ?? result.JobDetail.Id?.ToString() ?? "Unknown");
             throw;
         }
     }
 
+    /// <summary>
+    /// 회사 정보 스크래핑 결과 처리
+    /// </summary>
     private async Task ProcessCompanyResult(ScrapingResult result)
     {
         if (result.Company == null)
@@ -165,7 +198,12 @@ public class ResultController : ControllerBase
         try
         {
             // 기존 회사 정보가 있는지 확인
-            var existingCompany = await _companyService.GetByNameAsync(result.Company.Name);
+            if (string.IsNullOrEmpty(result.Company.SourceCompanyId))
+            {
+                _logger.LogWarning("받은 회사 정보에 SourceCompanyId가 없음: {companyName}", result.Company.Name);
+                return;
+            }
+            var existingCompany = await _companyService.GetBySourceCompanyIdAsync(result.Company.SourceCompanyId);
             if (existingCompany != null)
             {
                 // 기존 회사 정보 업데이트 (새로운 정보로)

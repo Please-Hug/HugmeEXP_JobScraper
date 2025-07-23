@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JobScraper.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(JobScraperDbContext))]
-    [Migration("20250722005329_AddImageUrlAndDueDate")]
-    partial class AddImageUrlAndDueDate
+    [Migration("20250722123555_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -40,6 +40,21 @@ namespace JobScraper.Infrastructure.Data.Migrations
                     b.ToTable("JobDetailEntitySkillEntity");
                 });
 
+            modelBuilder.Entity("JobDetailEntityTagEntity", b =>
+                {
+                    b.Property<int>("JobDetailsId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TagsId")
+                        .HasColumnType("int");
+
+                    b.HasKey("JobDetailsId", "TagsId");
+
+                    b.HasIndex("TagsId");
+
+                    b.ToTable("JobDetailEntityTagEntity");
+                });
+
             modelBuilder.Entity("JobScraper.Infrastructure.Data.Entities.CompanyEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -60,15 +75,19 @@ namespace JobScraper.Infrastructure.Data.Migrations
                         .HasColumnType("varchar(1000)");
 
                     b.Property<decimal?>("Latitude")
-                        .HasColumnType("decimal(65,30)");
+                        .HasColumnType("decimal(10, 8)");
 
                     b.Property<decimal?>("Longitude")
-                        .HasColumnType("decimal(65,30)");
+                        .HasColumnType("decimal(11, 8)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
+
+                    b.Property<string>("SourceCompanyId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.HasKey("Id");
 
@@ -84,33 +103,36 @@ namespace JobScraper.Infrastructure.Data.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Benefits")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(10000)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(30000)
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("DueDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("Education")
-                        .HasColumnType("longtext");
+                    b.Property<int?>("Education")
+                        .HasColumnType("int");
 
-                    b.Property<string>("Experience")
-                        .HasColumnType("longtext");
+                    b.Property<int?>("Experience")
+                        .HasColumnType("int");
 
                     b.Property<int>("JobListingId")
                         .HasColumnType("int");
 
                     b.Property<string>("Location")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
 
                     b.Property<decimal?>("LocationLatitude")
-                        .HasColumnType("decimal(65,30)");
+                        .HasColumnType("decimal(10, 8)");
 
                     b.Property<decimal?>("LocationLongitude")
-                        .HasColumnType("decimal(65,30)");
+                        .HasColumnType("decimal(11, 8)");
 
                     b.Property<long>("MaxSalary")
                         .HasColumnType("bigint");
@@ -119,10 +141,12 @@ namespace JobScraper.Infrastructure.Data.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("PreferredQualifications")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(10000)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Requirements")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(10000)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -145,15 +169,22 @@ namespace JobScraper.Infrastructure.Data.Migrations
 
                     b.Property<string>("Source")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("SourceJobId")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
 
                     b.Property<string>("Url")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
 
                     b.HasKey("Id");
 
@@ -170,23 +201,42 @@ namespace JobScraper.Infrastructure.Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("EnglishName")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
                     b.Property<string>("IconUrl")
-                        .HasColumnType("longtext");
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
 
-                    b.Property<string>("KoreanName")
+                    b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EnglishName")
+                    b.HasIndex("Name")
                         .IsUnique();
 
                     b.ToTable("Skills");
+                });
+
+            modelBuilder.Entity("JobScraper.Infrastructure.Data.Entities.TagEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("JobDetailEntitySkillEntity", b =>
@@ -200,6 +250,21 @@ namespace JobScraper.Infrastructure.Data.Migrations
                     b.HasOne("JobScraper.Infrastructure.Data.Entities.SkillEntity", null)
                         .WithMany()
                         .HasForeignKey("RequiredSkillsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("JobDetailEntityTagEntity", b =>
+                {
+                    b.HasOne("JobScraper.Infrastructure.Data.Entities.JobDetailEntity", null)
+                        .WithMany()
+                        .HasForeignKey("JobDetailsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("JobScraper.Infrastructure.Data.Entities.TagEntity", null)
+                        .WithMany()
+                        .HasForeignKey("TagsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

@@ -39,7 +39,12 @@ public class CompanyService : ICompanyService
 
     public async Task<Company> UpdateAsync(Company company)
     {
-        if (!await _companyRepository.ExistsAsync(company.Id))
+        if (!company.Id.HasValue)
+        {
+            throw new ArgumentException("Company ID is required for update operation.");
+        }
+        
+        if (!await _companyRepository.ExistsAsync(company.Id.Value))
         {
             throw new ArgumentException($"Company with ID {company.Id} not found");
         }

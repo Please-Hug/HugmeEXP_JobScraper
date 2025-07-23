@@ -48,9 +48,9 @@ public class JobDetailController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult<JobDetail>> UpdateJobDetail(int id, [FromBody] JobDetail jobDetail)
     {
-        if (id != jobDetail.Id)
+        if (!jobDetail.Id.HasValue || id != jobDetail.Id.Value)
         {
-            return BadRequest("ID mismatch");
+            return BadRequest("ID mismatch or missing JobDetail ID");
         }
 
         try
