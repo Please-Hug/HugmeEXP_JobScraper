@@ -1,11 +1,22 @@
 ﻿namespace JobScraper.Core.Models;
 
+/// <summary>
+/// 채용공고 기본 정보
+/// </summary>
 public class JobListing
 {
-    public required int Id { get; set; }
+    /// <summary>
+    /// 데이터베이스 Primary Key (자동 생성)
+    /// </summary>
+    public int? Id { get; set; }
+    
+    /// <summary>
+    /// 원본 사이트의 채용공고 고유 ID
+    /// </summary>
+    public string? SourceJobId { get; set; }
+    
     public required string Title { get; set; }
-    public required string Company { get; set; }
-    public required int Experience { get; set; } // 경력 요구사항 (0: 신입, 1 이상 : 경력 년수)
+    public Company? Company { get; set; }
     public required string Url { get; set; }
     public required string Source { get; set; }
 }

@@ -1,5 +1,6 @@
 ﻿using JobScraper.Core.Interfaces;
 using JobScraper.Core.Models;
+using System.Linq;
 
 namespace JobScraper.Server.Services;
 
@@ -29,11 +30,25 @@ public class SkillService : ISkillService
 
     public async Task<Skill> CreateSkillAsync(Skill skill)
     {
+        // 중복 영문명 또는 한글명 체크
+        var existingByName = await _skillRepository.GetByNameAsync(skill.Name);
+        
+        if (existingByName != null)
+        {
+            throw new InvalidOperationException($"Skill with name '{skill.Name}' already exists.");
+        }
+
         return await _skillRepository.CreateAsync(skill);
     }
 
     public async Task<Skill> UpdateSkillAsync(Skill skill)
     {
+        var existing = await _skillRepository.GetByIdAsync(skill.Id);
+        if (existing == null)
+        {
+            throw new ArgumentException($"Skill with ID {skill.Id} not found.");
+        }
+
         return await _skillRepository.UpdateAsync(skill);
     }
 
@@ -49,13 +64,19 @@ public class SkillService : ISkillService
 
     public async Task<Skill> GetOrCreateSkillAsync(string skillName)
     {
-        var existingSkill = await _skillRepository.GetByNameAsync(skillName);
-        if (existingSkill != null)
+        var existing = await _skillRepository.GetByNameAsync(skillName);
+        if (existing != null)
         {
-            return existingSkill;
+            return existing;
         }
 
-        var newSkill = new Skill { Name = skillName };
+        // 스킬명이 영어인지 한국어인지 판단하여 적절한 필드에 할당
+        var newSkill = new Skill
+        {
+            Id = 0, // 새로운 스킬이므로 0으로 설정
+            Name = skillName
+        };
+
         return await _skillRepository.CreateAsync(newSkill);
     }
 
@@ -63,7 +84,7 @@ public class SkillService : ISkillService
     {
         var skills = new List<Skill>();
         
-        foreach (var skillName in skillNames)
+        foreach (var skillName in skillNames.Distinct())
         {
             var skill = await GetOrCreateSkillAsync(skillName);
             skills.Add(skill);

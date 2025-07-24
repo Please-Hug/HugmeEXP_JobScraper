@@ -6,17 +6,12 @@ namespace JobScraper.Server.Services;
 public class JobDetailService : IJobDetailService
 {
     private readonly IJobDetailRepository _jobDetailRepository;
-    private readonly ISkillRepository _skillRepository;
+    private readonly ISkillService _skillService;
 
-    public JobDetailService(IJobDetailRepository jobDetailRepository, ISkillRepository skillRepository)
+    public JobDetailService(IJobDetailRepository jobDetailRepository, ISkillService skillService)
     {
         _jobDetailRepository = jobDetailRepository;
-        _skillRepository = skillRepository;
-    }
-
-    public async Task<IEnumerable<JobDetail>> GetAllJobDetailsAsync()
-    {
-        return await _jobDetailRepository.GetAllAsync();
+        _skillService = skillService;
     }
 
     public async Task<JobDetail?> GetJobDetailByIdAsync(int id)
@@ -31,6 +26,17 @@ public class JobDetailService : IJobDetailService
 
     public async Task<JobDetail> UpdateJobDetailAsync(JobDetail jobDetail)
     {
+        if (!jobDetail.Id.HasValue)
+        {
+            throw new ArgumentException("JobDetail ID is required for update operation.");
+        }
+        
+        var existing = await _jobDetailRepository.GetByIdAsync(jobDetail.Id.Value);
+        if (existing == null)
+        {
+            throw new ArgumentException($"JobDetail with ID {jobDetail.Id} not found.");
+        }
+
         return await _jobDetailRepository.UpdateAsync(jobDetail);
     }
 
@@ -51,10 +57,28 @@ public class JobDetailService : IJobDetailService
 
     public async Task<JobDetail> CreateJobDetailWithSkillsAsync(JobDetail jobDetail, IEnumerable<string> skillNames)
     {
-        // 스킬 이름들을 JobDetail의 RequiredSkills에 설정
-        jobDetail.RequiredSkills = skillNames.ToList();
+        // 스킬들을 먼저 생성하거나 조회
+        var skills = await _skillService.GetOrCreateSkillsAsync(skillNames);
         
-        // Repository에서 자동으로 스킬 엔티티를 생성/연결해줌
+        // JobDetail에 스킬들 할당
+        jobDetail.RequiredSkills = skills.ToList();
+        
+        // JobDetail 생성
         return await _jobDetailRepository.CreateAsync(jobDetail);
+    }
+
+    public async Task<JobDetail?> GetJobDetailByJobListingId(int id)
+    {
+        if (id <= 0)
+        {
+            throw new ArgumentException("JobListing ID must be greater than zero.", nameof(id));
+        }
+        
+        return await _jobDetailRepository.GetByJobListingIdAsync(id);
+    }
+
+    public Task<IEnumerable<JobDetail>> GetAllJobDetailsAsync()
+    {
+        return _jobDetailRepository.GetAllAsync();
     }
 }

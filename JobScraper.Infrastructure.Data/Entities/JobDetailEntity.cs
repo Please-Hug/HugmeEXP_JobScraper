@@ -1,42 +1,44 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using JobScraper.Core.Enums;
 
 namespace JobScraper.Infrastructure.Data.Entities;
 
+/// <summary>
+/// 채용공고 상세 정보 테이블 엔티티
+/// </summary>
 public class JobDetailEntity
 {
     [Key]
     public int Id { get; set; }
     
-    // JobListing과의 관계를 위한 Foreign Key
+    // JobListing과의 관계
     public int JobListingId { get; set; }
     
-    [Required]
-    [MaxLength(10000)]
+    [MaxLength(30000)]
     public required string Description { get; set; }
-    
-    // RequiredSkills를 SkillEntity와의 다대다 관계로 변경
     public ICollection<SkillEntity> RequiredSkills { get; set; } = new List<SkillEntity>();
-    
-    public required long Salary { get; set; } // 연봉 (0: 협의)
-    
-    [Column(TypeName = "int")]
-    public required EducationLevel EducationLevel { get; set; } // 최소 학력
-    
-    [Required]
+    public required long MinSalary { get; set; }
+    public required long MaxSalary { get; set; }
     [MaxLength(500)]
     public required string Location { get; set; }
+    public DateTime? DueDate { get; set; }
     
-    // 추가 컬렉션 프로퍼티들 (JSON으로 저장)
-    [Column(TypeName = "json")]
-    public ICollection<string> Prefers { get; set; } = new List<string>(); // 우대사항
+    // 추가 상세 정보
     
-    [Column(TypeName = "json")]
-    public ICollection<string> Tags { get; set; } = new List<string>(); // 태그
+    public int? Education { get; set; }
+    public int? Experience { get; set; }
+    [MaxLength(10000)]
+    public string? Requirements { get; set; }
+    [MaxLength(10000)]
+    public string? PreferredQualifications { get; set; }
+    [MaxLength(10000)]
+    public string? Benefits { get; set; }
+    [Column(TypeName = "decimal(10, 8)")]
+    public decimal? LocationLatitude { get; set; }
+    [Column(TypeName = "decimal(11, 8)")]
+    public decimal? LocationLongitude { get; set; }
     
-    [Column(TypeName = "json")]
-    public ICollection<string> Qualifications { get; set; } = new List<string>(); // 자격요건
+    public ICollection<TagEntity> Tags { get; set; } = new List<TagEntity>();
     
     public required JobListingEntity JobListing { get; set; }
 }

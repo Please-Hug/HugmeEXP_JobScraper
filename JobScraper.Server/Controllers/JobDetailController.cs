@@ -33,6 +33,17 @@ public class JobDetailController : ControllerBase
         return Ok(jobDetail);
     }
 
+    [HttpGet("with-all")]
+    public async Task<ActionResult<List<JobDetail>>> GetJobDetails()
+    {
+        var jobDetails = await _jobDetailService.GetAllJobDetailsAsync();
+        if (jobDetails == null || !jobDetails.Any())
+        {
+            return NotFound("No job details found");
+        }
+        return Ok(jobDetails);
+    }
+
     [HttpPost]
     public async Task<ActionResult<JobDetail>> CreateJobDetail([FromBody] JobDetail jobDetail)
     {
@@ -65,9 +76,9 @@ public class JobDetailController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult<JobDetail>> UpdateJobDetail(int id, [FromBody] JobDetail jobDetail)
     {
-        if (id != jobDetail.Id)
+        if (!jobDetail.Id.HasValue || id != jobDetail.Id.Value)
         {
-            return BadRequest("ID mismatch");
+            return BadRequest("ID mismatch or missing JobDetail ID");
         }
 
         if (!ModelState.IsValid)

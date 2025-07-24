@@ -2,27 +2,27 @@
 
 namespace JobScraper.Infrastructure.Data.Entities;
 
+/// <summary>
+/// 채용공고 테이블 엔티티
+/// </summary>
 public class JobListingEntity
 {
     [Key]
     public required int Id { get; set; }
     
-    [Required]
-    [MaxLength(200)]
+    [MaxLength(100)]
+    public string? SourceJobId { get; set; }
+    
+    [MaxLength(300)]
     public required string Title { get; set; }
     
-    [Required]
-    [MaxLength(100)]
-    public required string Company { get; set; }
+    // Company 관계
+    public required int CompanyId { get; set; }
+    public required CompanyEntity Company { get; set; }
     
-    public required int Experience { get; set; } // 경력 요구사항 (0: 신입, 1 이상 : 경력 년수)
-    
-    [Required]
     [MaxLength(1000)]
     public required string Url { get; set; }
-    
-    [Required]
-    [MaxLength(50)]
+    [MaxLength(50)] // 추후 열거형으로 변경 가능
     public required string Source { get; set; }
     
     public JobDetailEntity? JobDetail { get; set; }

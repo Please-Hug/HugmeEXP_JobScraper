@@ -1,15 +1,29 @@
-﻿using JobScraper.Core.Enums;
+﻿namespace JobScraper.Core.Models;
 
-namespace JobScraper.Core.Models;
-
+/// <summary>
+/// 채용공고 상세 정보 (JobListing 상속)
+/// </summary>
 public class JobDetail : JobListing
 {
     public required string Description { get; set; }
-    public required ICollection<string> RequiredSkills { get; set; } = new List<string>(); // 요구 스킬
-    public required long Salary { get; set; } // 최소 연봉 (0: 협의)
-    public required EducationLevel EducationLevel { get; set; } // 최소 학력
-    public required ICollection<string> Prefers { get; set; } = new List<string>(); // 우대사항
-    public required ICollection<string> Tags { get; set; } = new List<string>(); // 태그
-    public required ICollection<string> Qualifications { get; set; } = new List<string>(); // 자격요건
-    public required string Location { get; set; } // 근무지 주소
+    public required ICollection<Skill> RequiredSkills { get; set; } = new List<Skill>();
+    public required long MinSalary { get; set; }
+    public required long MaxSalary { get; set; }
+    public required string Location { get; set; }
+    
+    /// <summary>
+    /// 채용 마감일
+    /// </summary>
+    public DateTime? DueDate { get; set; }
+    
+    // 추가 상세 정보
+    public int? Education { get; set; }
+    public int? Experience { get; set; }
+    public string? Requirements { get; set; }
+    public string? PreferredQualifications { get; set; }
+    public string? Benefits { get; set; }
+    public decimal? LocationLatitude { get; set; }
+    public decimal? LocationLongitude { get; set; }
+    
+    public ICollection<Tag> Tags { get; set; } = new List<Tag>();
 }

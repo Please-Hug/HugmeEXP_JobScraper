@@ -49,48 +49,49 @@ public class JobListingController : ControllerBase
         return Ok(jobListing);
     }
 
+    [HttpGet("by-source-job-id")]
+    public async Task<ActionResult<JobListing>> GetJobListingBySourceJobId([FromQuery] string sourceJobId)
+    {
+        if (string.IsNullOrEmpty(sourceJobId))
+        {
+            return BadRequest("SourceJobId is required");
+        }
+
+        var jobListing = await _jobListingService.GetJobListingBySourceJobIdAsync(sourceJobId);
+        if (jobListing == null)
+        {
+            return NotFound();
+        }
+        return Ok(jobListing);
+    }
+
     [HttpGet("by-source/{source}")]
     public async Task<ActionResult<IEnumerable<JobListing>>> GetJobListingsBySource(string source)
     {
         var jobListings = await _jobListingService.GetJobListingsBySourceAsync(source);
         return Ok(jobListings);
     }
-
-    [HttpGet("exists")]
-    public async Task<ActionResult<bool>> CheckJobListingExists([FromQuery] string url)
-    {
-        if (string.IsNullOrEmpty(url))
-        {
-            return BadRequest("URL is required");
-        }
-
-        var exists = await _jobListingService.JobListingExistsAsync(url);
-        return Ok(exists);
-    }
-
+    
     [HttpPost]
     public async Task<ActionResult<JobListing>> CreateJobListing([FromBody] JobListing jobListing)
     {
-        if (!ModelState.IsValid)
+        try
         {
-            return BadRequest(ModelState);
+            var createdJobListing = await _jobListingService.CreateJobListingAsync(jobListing);
+            return CreatedAtAction(nameof(GetJobListing), new { id = createdJobListing.Id }, createdJobListing);
         }
-
-        var createdJobListing = await _jobListingService.CreateJobListingAsync(jobListing);
-        return CreatedAtAction(nameof(GetJobListing), new { id = createdJobListing.Id }, createdJobListing);
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult<JobListing>> UpdateJobListing(int id, [FromBody] JobListing jobListing)
     {
-        if (id != jobListing.Id)
+        if (!jobListing.Id.HasValue || id != jobListing.Id.Value)
         {
-            return BadRequest("ID mismatch");
-        }
-
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
+            return BadRequest("ID mismatch or missing JobListing ID");
         }
 
         try
@@ -109,5 +110,17 @@ public class JobListingController : ControllerBase
     {
         await _jobListingService.DeleteJobListingAsync(id);
         return NoContent();
+    }
+
+    [HttpGet("exists")]
+    public async Task<ActionResult<bool>> CheckJobListingExists([FromQuery] string url)
+    {
+        if (string.IsNullOrEmpty(url))
+        {
+            return BadRequest("URL is required");
+        }
+
+        var exists = await _jobListingService.JobListingExistsAsync(url);
+        return Ok(exists);
     }
 }
