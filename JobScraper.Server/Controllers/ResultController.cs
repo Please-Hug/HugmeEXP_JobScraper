@@ -19,6 +19,7 @@ public class ResultController : ControllerBase
     private readonly ISkillService _skillService;
     private readonly ITagService _tagService;
     private readonly ILogger<ResultController> _logger;
+    private readonly IKakaoMapService _kakaoMapService;
 
     public ResultController(
         IJobListingService jobListingService,
@@ -26,6 +27,7 @@ public class ResultController : ControllerBase
         ICompanyService companyService,
         ISkillService skillService,
         ITagService tagService,
+        IKakaoMapService kakaoMapService,
         ILogger<ResultController> logger)
     {
         _jobListingService = jobListingService;
@@ -33,6 +35,7 @@ public class ResultController : ControllerBase
         _companyService = companyService;
         _skillService = skillService;
         _tagService = tagService;
+        _kakaoMapService = kakaoMapService;
         _logger = logger;
     }
 
@@ -161,6 +164,32 @@ public class ResultController : ControllerBase
 
             // 기존 JobDetail이 있는지 확인
             var existingDetail = await _jobDetailService.GetJobDetailByJobListingId(existingJobListing.Id!.Value);
+
+            if (!string.IsNullOrEmpty(result.JobDetail.Location) && result.JobDetail.LocationLongitude is null)
+            {
+                var coords = await _kakaoMapService.GetCoordinatesAsync(result.JobDetail.Location);
+                result.JobDetail.LocationLongitude = coords.Item1;
+                result.JobDetail.LocationLatitude = coords.Item2;
+            }
+
+            if (result.JobDetail.Company?.SourceCompanyId != null &&
+                !string.IsNullOrEmpty(result.JobDetail.Company.Address) && result.JobDetail.Company.Longitude is null)
+            {
+                var coords = await _kakaoMapService.GetCoordinatesAsync(result.JobDetail.Company.Address);
+                result.JobDetail.Company.Longitude = coords.Item1;
+                result.JobDetail.Company.Latitude = coords.Item2;
+                // 회사 정보 업데이트
+                var existingCompany =
+                    await _companyService.GetBySourceCompanyIdAsync(result.JobDetail.Company.SourceCompanyId);
+                if (existingCompany != null)
+                {
+                    result.JobDetail.Company.Id = existingCompany.Id;
+                    await _companyService.UpdateAsync(result.JobDetail.Company);
+                    _logger.LogInformation("기존 회사 정보 업데이트: {name}", result.JobDetail.Company.Name);
+                }
+            }
+            
+            
             if (existingDetail != null)
             {
                 result.JobDetail.Id = existingDetail.Id;

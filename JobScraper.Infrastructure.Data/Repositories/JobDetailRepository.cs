@@ -273,14 +273,14 @@ public class JobDetailRepository : IJobDetailRepository
         // 스킬 엔티티들을 찾아서 연결
         if (model.RequiredSkills.Count > 0)
         {
-            var skilNames = model.RequiredSkills.Select(s => s.Name).ToList();
+            var skillNames = model.RequiredSkills.Select(s => s.Name.ToLower()).ToList();
             
             var skillEntities = await _context.Skills
-                .Where(s => skilNames.Contains(s.Name))
+                .Where(s => skillNames.Contains(s.Name.ToLower()))
                 .ToListAsync();
-            var existingSkillNames = new HashSet<string>(skillEntities.Select(e => e.Name));
+            var existingSkillNames = new HashSet<string>(skillEntities.Select(e => e.Name.ToLower()));
             var newSkillEntities = model.RequiredSkills
-                .Where(s => !existingSkillNames.Contains(s.Name))
+                .Where(s => !existingSkillNames.Contains(s.Name.ToLower()))
                 .Select(s => new SkillEntity { Name = s.Name, IconUrl = s.IconUrl })
                 .ToList();
 
@@ -297,14 +297,14 @@ public class JobDetailRepository : IJobDetailRepository
 
         if (model.Tags.Count > 0)
         {
-            var tagNames = model.Tags.Select(t => t.Name).ToList();
+            var tagNames = model.Tags.Select(t => t.Name.ToLower()).ToList();
             
             var tagEntities = await _context.Tags
-                .Where(t => tagNames.Contains(t.Name))
+                .Where(t => tagNames.Contains(t.Name.ToLower()))
                 .ToListAsync();
-            var existingTagNames = new HashSet<string>(tagEntities.Select(e => e.Name));
+            var existingTagNames = new HashSet<string>(tagEntities.Select(e => e.Name.ToLower()));
             var newTagEntities = model.Tags
-                .Where(t => !existingTagNames.Contains(t.Name))
+                .Where(t => !existingTagNames.Contains(t.Name.ToLower()))
                 .Select(t => new TagEntity { Name = t.Name })
                 .ToList();
             
