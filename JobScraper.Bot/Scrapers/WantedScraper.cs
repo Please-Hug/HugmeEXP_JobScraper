@@ -9,6 +9,8 @@ public class WantedScraper : IJobScraper
 {
     private readonly ILogger<WantedScraper> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
+    private const string UserAgent = "CareerBotX/1.0 (Job Data Analyzer Demo; github.com/Please-Hug/HugmeEXP_JobScraper)";
+    private const string SecChUa = "\"CareerBotX\";v=\"1\", \"EducationalScraper\";v=\"Demo\"";
 
     public WantedScraper(ILogger<WantedScraper> logger, IHttpClientFactory httpClientFactory)
     {
@@ -206,10 +208,10 @@ public class WantedScraper : IJobScraper
         request.Headers.Add("Connection", "keep-alive");
         request.Headers.Add("WANTED-User-Agent", "user-web");
         request.Headers.Add("sec-ch-ua-platform", "\"Windows\"");
-        request.Headers.Add("sec-ch-ua", "\"Chromium\";v=\"136\", \"Whale\";v=\"4\", \"Not.A/Brand\";v=\"99\"");
+        request.Headers.Add("sec-ch-ua", SecChUa);
         request.Headers.Add("sec-ch-ua-mobile", "?0");
         request.Headers.Add("WANTED-User-Language", "ko");
-        request.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Whale/4.32.315.22 Safari/537.36");
+        request.Headers.Add("User-Agent", UserAgent);
         request.Headers.Add("Accept", "application/json, text/plain");
         request.Headers.Add("WANTED-User-Country", "KR");
         request.Headers.Add("Sec-Fetch-Site", "same-origin");
