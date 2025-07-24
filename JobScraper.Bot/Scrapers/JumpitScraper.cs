@@ -10,15 +10,9 @@ public class JumpitScraper : IJobScraper
 {
     private readonly ILogger<JumpitScraper> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
-    
-    /*
-    { "label": "무관", "value": 0 },
-    { "label": "고졸", "value": 10 },
-    { "label": "초대졸", "value": 20 },
-    { "label": "대졸", "value": 30 },
-    { "label": "석사", "value": 40 },
-    { "label": "박사", "value": 50 }
-     */
+    private const string UserAgent = "CareerBotX/1.0 (Job Data Analyzer Demo; github.com/Please-Hug/HugmeEXP_JobScraper)";
+    private const string SecChUa = "\"CareerBotX\";v=\"1\", \"EducationalScraper\";v=\"Demo\"";
+
     private static readonly Dictionary<string, int> EducationMap = new()
     {
         { "무관", 0 },
@@ -207,9 +201,9 @@ public class JumpitScraper : IJobScraper
         request.Headers.Clear();
         request.Headers.Add("Connection", "keep-alive");
         request.Headers.Add("sec-ch-ua-platform", "\"Windows\"");
-        request.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Whale/4.32.315.22 Safari/537.36");
+        request.Headers.Add("User-Agent", UserAgent);
         request.Headers.Add("Accept", "application/json, text/plain");
-        request.Headers.Add("sec-ch-ua", "\"Chromium\";v=\"136\", \"Whale\";v=\"4\", \"Not.A/Brand\";v=\"99\"");
+        request.Headers.Add("sec-ch-ua", SecChUa);
         request.Headers.Add("sec-ch-ua-mobile", "?0");
         request.Headers.Add("Origin", "https://jumpit.saramin.co.kr");
         request.Headers.Add("Sec-Fetch-Site", "same-site");
@@ -226,8 +220,8 @@ public class JumpitScraper : IJobScraper
         request.Headers.Add("RSC", "1");
         request.Headers.Add("sec-ch-ua-platform", "\"Windows\"");
         request.Headers.Add("User-Agent",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Whale/4.32.315.22 Safari/537.36");
-        request.Headers.Add("sec-ch-ua", "\"Chromium\";v=\"136\", \"Whale\";v=\"4\", \"Not.A/Brand\";v=\"99\"");
+            UserAgent);
+        request.Headers.Add("sec-ch-ua", SecChUa);
         request.Headers.Add("sec-ch-ua-mobile", "?0");
         request.Headers.Add("Next-Router-State-Tree",
             "%5B%22%22%2C%7B%22children%22%3A%5B%22(main)%22%2C%7B%22children%22%3A%5B%22positions%22%2C%7B%22children%22%3A%5B%22__PAGE__%3F%7B%5C%22sort%5C%22%3A%5C%22popular%5C%22%7D%22%2C%7B%7D%5D%7D%5D%7D%2Cnull%2Cnull%2Ctrue%5D%7D%2Cnull%2Cnull%2Ctrue%5D");
