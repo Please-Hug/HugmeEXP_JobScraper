@@ -20,6 +20,15 @@ builder.Services.AddResponseCompression(options =>
     options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
 });
 
+builder.Services.AddHttpClient("KakaoMapService", client =>
+{
+    client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
+{
+    AutomaticDecompression = System.Net.DecompressionMethods.All
+});
+
+
 // Entity Framework 설정
 builder.Services.AddDbContext<JobScraperDbContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"), 
@@ -38,6 +47,7 @@ builder.Services.AddScoped<IJobDetailService, JobDetailService>();
 builder.Services.AddScoped<ISkillService, SkillService>();
 builder.Services.AddScoped<ICompanyService, CompanyService>();
 builder.Services.AddScoped<ITagService, TagService>();
+builder.Services.AddScoped<IKakaoMapService, KakaoMapService>();
 
 // RabbitMQ 클라이언트 설정
 builder.Services.AddSingleton<IQueueClient>(_ =>

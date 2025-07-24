@@ -24,7 +24,7 @@ public class WantedScraper : IJobScraper
         {
             "latest" => "job.latest_order",
             "recommend" => "job.recommend_order",
-            "popularity_order" => "job.popularity_order",
+            "popular" => "job.popularity_order",
             _ => "job.latest_order"
         };
         var request = new HttpRequestMessage(HttpMethod.Get, 
