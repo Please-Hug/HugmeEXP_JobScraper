@@ -16,7 +16,7 @@ public class JobListing
     public string? SourceJobId { get; set; }
     
     public required string Title { get; set; }
-    public required Company Company { get; set; }
+    public Company? Company { get; set; }
     public required string Url { get; set; }
     public required string Source { get; set; }
 }
