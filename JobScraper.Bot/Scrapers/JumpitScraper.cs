@@ -199,8 +199,7 @@ public class JumpitScraper : IJobScraper
 
     public Task<Company> GetCompanyAsync(string companyId)
     {
-        // TODO: 실제 점핏 회사 정보 크롤링 구현
-        throw new NotImplementedException();
+        throw new Exception("Jumpit does not support fetching company details directly.");
     }
     
     private static void SetupListingHeaders(HttpRequestMessage request, string referer)
