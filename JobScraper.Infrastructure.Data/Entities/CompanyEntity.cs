@@ -23,6 +23,9 @@ public class CompanyEntity
   [MaxLength(1000)]
   public string? ImageUrl { get; set; }
   
+  [MaxLength(10000)]
+  public string? Description { get; set; }
+  
   [Column(TypeName = "decimal(10, 8)")]
   public decimal? Latitude { get; set; }
   

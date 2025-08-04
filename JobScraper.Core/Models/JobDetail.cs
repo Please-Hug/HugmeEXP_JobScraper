@@ -18,7 +18,8 @@ public class JobDetail : JobListing
     
     // 추가 상세 정보
     public int? Education { get; set; }
-    public int? Experience { get; set; }
+    public int? ExperienceMin { get; set; }
+    public int? ExperienceMax { get; set; }
     public string? Requirements { get; set; }
     public string? PreferredQualifications { get; set; }
     public string? Benefits { get; set; }

@@ -154,13 +154,15 @@ public class JumpitScraper : IJobScraper
                 ImageUrl = data["logo"]?.ToString() ?? throw new InvalidOperationException("Image URL not found"),
                 EstablishedDate = DateTime.Now.AddYears(- data["establishPeriod"]?.Value<int>() - 1 ?? 0),
                 Address = data["location"]?.ToString() ?? string.Empty,
+                Description = string.Empty, //TODO: 회사 설명이 있는지 확인
             },
             Description = (data["serviceInfo"]?.ToString() ?? string.Empty)
             + (data["responsibility"]?.ToString() ?? string.Empty),
             Id = null,
             DueDate = data["closedAt"]?.ToObject<DateTime?>(),
             Education = EducationMap[data["educationName"]?.ToString() ?? "무관"], // 기본값을 무관으로 채움
-            Experience = data["minCareer"]?.Value<int>(),
+            ExperienceMin = data["minCareer"]?.Value<int>(),
+            ExperienceMax = data["maxCareer"]?.Value<int>() ?? data["minCareer"]?.Value<int>(),
             Location = data["workingPlaces"]?[0]?["address"]?.ToString() ?? throw new InvalidOperationException("Location not found"),
             LocationLatitude = null,
             LocationLongitude = null,

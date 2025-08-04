@@ -24,6 +24,11 @@ public class Company
     /// </summary>
     public string? ImageUrl { get; set; }
     
+    /// <summary>
+    /// 회사 설명
+    /// </summary>
+    public string? Description { get; set; }
+    
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
     public DateTime? EstablishedDate { get; set; }

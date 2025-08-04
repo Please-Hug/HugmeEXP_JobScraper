@@ -1,4 +1,5 @@
 ﻿using JobScraper.Core.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 
 namespace JobScraper.Server.Services;
@@ -7,18 +8,13 @@ public class KakaoMapService : IKakaoMapService
 {
     private readonly ILogger<KakaoMapService> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly string _kakaoApiKey;
+    private readonly IConfiguration _configuration;
 
-    public KakaoMapService(ILogger<KakaoMapService> logger, IHttpClientFactory httpClientFactory)
+    public KakaoMapService(ILogger<KakaoMapService> logger, IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(Path.Combine(Directory.GetCurrentDirectory()))
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
-            .Build();
-        _kakaoApiKey = configuration["KakaoApiKey"] ?? throw new InvalidOperationException("KakaoApiKey 설정이 누락되었습니다.");
+        _configuration = configuration;
     }
     
     public async Task<Tuple<decimal, decimal>> GetCoordinatesAsync(string address)
@@ -26,9 +22,11 @@ public class KakaoMapService : IKakaoMapService
         _logger.LogInformation("KakaoMapService: Getting coordinates for address: {address}", address);
         var httpClient = _httpClientFactory.CreateClient("KakaoMapService");
         
+        var kakaoApiKey = _configuration["KakaoApiKey"] ?? throw new InvalidOperationException("KakaoApiKey 설정이 누락되었습니다.");
+        
         var request = new HttpRequestMessage(HttpMethod.Get, 
             $"https://dapi.kakao.com/v2/local/search/address.json?analyze_type=similar&page=1&size=10&query={Uri.EscapeDataString(address)}");
-        request.Headers.Add("Authorization", $"KakaoAK {_kakaoApiKey}");
+        request.Headers.Add("Authorization", $"KakaoAK {kakaoApiKey}");
         
         var response = await httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode)

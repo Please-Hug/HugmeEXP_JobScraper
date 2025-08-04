@@ -73,7 +73,8 @@ public class CompanyService : ICompanyService
         var newCompany = new Company
         {
             Id = 0, // EF will generate the ID
-            Name = name
+            Name = name,
+            Description = string.Empty // Description 필드 초기화
         };
 
         return await _companyRepository.AddAsync(newCompany);
@@ -159,6 +160,12 @@ public class CompanyService : ICompanyService
                 needsUpdate = true;
             }
 
+            if (!string.IsNullOrEmpty(companyInfo.Description) && existingCompany.Description != companyInfo.Description)
+            {
+                existingCompany.Description = companyInfo.Description;
+                needsUpdate = true;
+            }
+
             if (needsUpdate)
             {
                 return await _companyRepository.UpdateAsync(existingCompany);
@@ -177,7 +184,8 @@ public class CompanyService : ICompanyService
             ImageUrl = companyInfo.ImageUrl,
             Latitude = companyInfo.Latitude,
             Longitude = companyInfo.Longitude,
-            EstablishedDate = companyInfo.EstablishedDate
+            EstablishedDate = companyInfo.EstablishedDate,
+            Description = companyInfo.Description ?? string.Empty
         };
 
         return await _companyRepository.AddAsync(newCompany);

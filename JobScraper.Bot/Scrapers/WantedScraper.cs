@@ -119,12 +119,14 @@ public class WantedScraper : IJobScraper
                 Name = data?["job"]?["company"]?["name"]?.ToString() ?? throw new InvalidOperationException(),
                 SourceCompanyId = "wanted::" +
                                   (data["job"]?["company"]?["id"]?.ToString() ?? throw new InvalidOperationException()),
+                Description = string.Empty,//TODO: 회사 설명이 없을 경우 처리
             },
             Description = data["job"]?["detail"]?["intro"]?.ToString() ?? string.Empty,
             Id = null,
             DueDate = data["job"]?["due_time"]?.ToObject<DateTime?>(),
             Education = 0, // 원티드에는 학력 정보가 없음
-            Experience = data["job"]?["annual_from"]?.Value<int?>() ?? -1,
+            ExperienceMin = data["job"]?["annual_from"]?.Value<int?>() ?? -1,
+            ExperienceMax = data["job"]?["annual_to"]?.Value<int?>() ?? data["job"]?["annual_from"]?.Value<int?>() ?? -1,
             Location = data["job"]?["address"]?["full_location"]?.ToString() ?? throw new InvalidOperationException(),
             LocationLatitude = (bool)data["job"]?["address"]?["geo_location"]?.HasValues ? data["job"]?["address"]?["geo_location"]?["location"]?["lat"]?.ToObject<decimal?>() : null,
             LocationLongitude = (bool)data["job"]?["address"]?["geo_location"]?.HasValues ? data["job"]?["address"]?["geo_location"]?["location"]?["lng"]?.ToObject<decimal?>() : null,
@@ -204,7 +206,8 @@ public class WantedScraper : IJobScraper
             Longitude = data["address"]?["geo_location"]?["location"]?["lng"]?.ToObject<decimal>(),
             EstablishedDate = foundedYear.HasValue 
                 ? new DateTime(foundedYear.Value, 1, 1) 
-                : null
+                : null,
+            Description = data["description"]?.ToString() ?? string.Empty
         };
 
         if (company.Address != null && company.Address.Contains('\"'))

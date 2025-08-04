@@ -78,3 +78,6 @@ app.UseResponseCompression();
 app.MapControllers();
 
 app.Run();
+
+// 테스트를 위한 Program 클래스 공개
+public partial class Program { }

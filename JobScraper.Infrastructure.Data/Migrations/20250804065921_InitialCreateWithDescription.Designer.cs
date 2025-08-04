@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JobScraper.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(JobScraperDbContext))]
-    [Migration("20250722123555_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250804065921_InitialCreateWithDescription")]
+    partial class InitialCreateWithDescription
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -66,6 +66,10 @@ namespace JobScraper.Infrastructure.Data.Migrations
                     b.Property<string>("Address")
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(10000)
+                        .HasColumnType("varchar(10000)");
 
                     b.Property<DateTime?>("EstablishedDate")
                         .HasColumnType("datetime(6)");

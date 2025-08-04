@@ -1,5 +1,6 @@
 ﻿using JobScraper.Core.Interfaces;
 using JobScraper.Core.Models;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 
 namespace JobScraper.Server.Services;
@@ -9,12 +10,14 @@ public class JobDetailService : IJobDetailService
     private readonly IJobDetailRepository _jobDetailRepository;
     private readonly ISkillService _skillService;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfiguration _configuration;
 
-    public JobDetailService(IJobDetailRepository jobDetailRepository, ISkillService skillService, IHttpClientFactory httpClientFactory)
+    public JobDetailService(IJobDetailRepository jobDetailRepository, ISkillService skillService, IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
         _jobDetailRepository = jobDetailRepository;
         _skillService = skillService;
         _httpClientFactory = httpClientFactory;
+        _configuration = configuration;
     }
 
     public async Task<JobDetail?> GetJobDetailByIdAsync(int id)
@@ -111,14 +114,14 @@ public class JobDetailService : IJobDetailService
                 ["recruitmentSourceId"] = jobDetail.SourceJobId,
                 ["title"] = jobDetail.Title,
                 ["education"] = jobDetail.Education,
-                ["experienceMin"] = jobDetail.Experience == -1 ? 0 : jobDetail.Experience,
-                ["experienceMax"] = jobDetail.Experience == -1 ? 0 : jobDetail.Experience,
+                ["experienceMin"] = jobDetail.ExperienceMin ?? 0,
+                ["experienceMax"] = jobDetail.ExperienceMax ?? 0,
                 ["qualification"] = jobDetail.Requirements ?? string.Empty,
                 ["advantage"] = jobDetail.PreferredQualifications ?? string.Empty,
                 ["welfare"] = jobDetail.Benefits ?? string.Empty,
                 ["workLocation"] = jobDetail.Location,
-                ["latitude"] = jobDetail.LocationLongitude.ToString(),
-                ["longitude"] = jobDetail.LocationLatitude.ToString(),
+                ["latitude"] = jobDetail.LocationLatitude?.ToString() ?? "0",
+                ["longitude"] = jobDetail.LocationLongitude?.ToString() ?? "0",
                 ["salaryMin"] = jobDetail.MinSalary,
                 ["salaryMax"] = jobDetail.MaxSalary,
                 ["link"] = jobDetail.Url,
@@ -127,12 +130,12 @@ public class JobDetailService : IJobDetailService
                 ["company"] = new JObject
                 {
                     ["companyName"] = jobDetail.Company.Name,
-                    ["companyAddress"] = jobDetail.Company.Address,
-                    ["latitude"] = jobDetail.Company.Latitude.ToString(),
-                    ["longitude"] = jobDetail.Company.Longitude.ToString(),
+                    ["companyAddress"] = jobDetail.Company.Address ?? string.Empty,
+                    ["latitude"] = jobDetail.Company.Latitude?.ToString() ?? "0",
+                    ["longitude"] = jobDetail.Company.Longitude?.ToString() ?? "0",
                     ["establishmentDate"] = $"{jobDetail.Company.EstablishedDate ?? DateTime.MaxValue:yyyy-MM-dd}",
-                    ["companyImageUrl"] = jobDetail.Company.ImageUrl,
-                    ["companyDescription"] = string.Empty,
+                    ["companyImageUrl"] = jobDetail.Company.ImageUrl ?? string.Empty,
+                    ["companyDescription"] = jobDetail.Company.Description ?? string.Empty,
                     ["companySourceId"] = jobDetail.Company.SourceCompanyId ?? string.Empty
                 },
                 ["requiredSkills"] = new JArray(jobDetail.RequiredSkills.Select(skill => new JObject
@@ -146,8 +149,12 @@ public class JobDetailService : IJobDetailService
                     ["tagName"] = tag.Name
                 }))
             };
-            var request = new HttpRequestMessage(HttpMethod.Post, "http://localhost:8080/api/v1/recruitments/scrape");
-            request.Headers.Add("X-API-Key", "1234567890");
+            
+            var apiUrl = _configuration["ExternalApi:BaseUrl"];
+            var apiKey = _configuration["ExternalApi:ApiKey"];
+            
+            var request = new HttpRequestMessage(HttpMethod.Post, apiUrl);
+            request.Headers.Add("X-API-Key", apiKey);
             request.Content = new StringContent(json.ToString(), System.Text.Encoding.UTF8, "application/json");
         
             var response = await client.SendAsync(request);

@@ -60,7 +60,8 @@ public class JobDetailRepository : IJobDetailRepository
         
         // 새로 추가된 필드들 업데이트
         entity.Education = jobDetail.Education;
-        entity.Experience = jobDetail.Experience;
+        entity.ExperienceMin = jobDetail.ExperienceMin;
+        entity.ExperienceMax = jobDetail.ExperienceMax;
         entity.Requirements = jobDetail.Requirements;
         entity.PreferredQualifications = jobDetail.PreferredQualifications;
         entity.Benefits = jobDetail.Benefits;
@@ -222,7 +223,8 @@ public class JobDetailRepository : IJobDetailRepository
             Location = entity.Location,
             // 새로 추가된 필드들
             Education = entity.Education,
-            Experience = entity.Experience,
+            ExperienceMin = entity.ExperienceMin,
+            ExperienceMax = entity.ExperienceMax,
             Requirements = entity.Requirements,
             PreferredQualifications = entity.PreferredQualifications,
             Benefits = entity.Benefits,
@@ -259,7 +261,8 @@ public class JobDetailRepository : IJobDetailRepository
             Location = model.Location,
             // 새로 추가된 필드들
             Education = model.Education,
-            Experience = model.Experience,
+            ExperienceMin = model.ExperienceMin,
+            ExperienceMax = model.ExperienceMax,
             Requirements = model.Requirements,
             PreferredQualifications = model.PreferredQualifications,
             Benefits = model.Benefits,

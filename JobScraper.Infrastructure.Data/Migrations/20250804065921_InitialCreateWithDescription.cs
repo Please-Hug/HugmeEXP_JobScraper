@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace JobScraper.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialCreateWithDescription : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -28,6 +28,8 @@ namespace JobScraper.Infrastructure.Data.Migrations
                     Address = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     ImageUrl = table.Column<string>(type: "varchar(1000)", maxLength: 1000, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Description = table.Column<string>(type: "varchar(10000)", maxLength: 10000, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Latitude = table.Column<decimal>(type: "decimal(10,8)", nullable: true),
                     Longitude = table.Column<decimal>(type: "decimal(11,8)", nullable: true),

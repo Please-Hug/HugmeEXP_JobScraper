@@ -26,7 +26,8 @@ public class JobDetailEntity
     // 추가 상세 정보
     
     public int? Education { get; set; }
-    public int? Experience { get; set; }
+    public int? ExperienceMin { get; set; }
+    public int? ExperienceMax { get; set; }
     [MaxLength(10000)]
     public string? Requirements { get; set; }
     [MaxLength(10000)]
