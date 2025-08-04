@@ -152,7 +152,7 @@ public class JumpitScraper : IJobScraper
                                   (data["encodedSerialNumber"]?.ToString() ??
                                    throw new InvalidOperationException("Company ID not found")),
                 ImageUrl = data["logo"]?.ToString() ?? throw new InvalidOperationException("Image URL not found"),
-                EstablishedDate = DateTime.Now.AddYears(data["establishPeriod"]?.Value<int>() - 1 ?? 0),
+                EstablishedDate = DateTime.Now.AddYears(- data["establishPeriod"]?.Value<int>() - 1 ?? 0),
                 Address = data["location"]?.ToString() ?? string.Empty,
             },
             Description = (data["serviceInfo"]?.ToString() ?? string.Empty)
@@ -187,6 +187,15 @@ public class JumpitScraper : IJobScraper
             .Where(t => !string.IsNullOrEmpty(t.Name))
             .DistinctBy(t => t.Name)
             .ToList();
+        if (jobDetail.Location.Contains('\"'))
+        {
+            jobDetail.Location = jobDetail.Location.Split('\"')[0].Trim();
+        }
+
+        if (jobDetail.Company.Address.Contains('\"'))
+        {
+            jobDetail.Company.Address = jobDetail.Company.Address.Split('\"')[0].Trim();
+        }
 
         return jobDetail;
     }
@@ -209,7 +218,7 @@ public class JumpitScraper : IJobScraper
         request.Headers.Add("Sec-Fetch-Site", "same-site");
         request.Headers.Add("Sec-Fetch-Mode", "cors");
         request.Headers.Add("Sec-Fetch-Dest", "empty");
-        request.Headers.Add("Referer", referer);
+        // request.Headers.Add("Referer", referer);
         request.Headers.Add("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7");
     }
 
@@ -228,6 +237,6 @@ public class JumpitScraper : IJobScraper
         request.Headers.Add("Sec-Fetch-Site", "same-origin");
         request.Headers.Add("Sec-Fetch-Mode", "cors");
         request.Headers.Add("Sec-Fetch-Dest", "empty");
-        request.Headers.Add("Referer", referer);
+        // request.Headers.Add("Referer", referer);
     }
 }

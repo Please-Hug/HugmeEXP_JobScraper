@@ -151,7 +151,15 @@ public class WantedScraper : IJobScraper
             .Where(t => !string.IsNullOrEmpty(t.Name))
             .DistinctBy(t => t.Name)
             .ToList();
+        if (jobDetail.Location.Contains('\"'))
+        {
+            jobDetail.Location = jobDetail.Location.Split('\"')[0].Trim();
+        }
 
+        if (jobDetail.Company is { Address: not null } && jobDetail.Company.Address.Contains('\"'))
+        {
+            jobDetail.Company.Address = jobDetail.Company.Address.Split('\"')[0].Trim();
+        }
         return jobDetail;
     }
 
@@ -198,6 +206,11 @@ public class WantedScraper : IJobScraper
                 ? new DateTime(foundedYear.Value, 1, 1) 
                 : null
         };
+
+        if (company.Address != null && company.Address.Contains('\"'))
+        {
+            company.Address = company.Address.Split('\"')[0].Trim();
+        }
         
         return company;
     }
@@ -217,7 +230,7 @@ public class WantedScraper : IJobScraper
         request.Headers.Add("Sec-Fetch-Site", "same-origin");
         request.Headers.Add("Sec-Fetch-Mode", "cors");
         request.Headers.Add("Sec-Fetch-Dest", "empty");
-        request.Headers.Add("Referer", referer);
+        // request.Headers.Add("Referer", referer);
         request.Headers.Add("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7");
     }
 }
