@@ -28,6 +28,13 @@ builder.Services.AddHttpClient("KakaoMapService", client =>
     AutomaticDecompression = System.Net.DecompressionMethods.All
 });
 
+builder.Services.AddHttpClient("ExternalService", client =>
+{
+    client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
+{
+    AutomaticDecompression = System.Net.DecompressionMethods.All
+});
 
 // Entity Framework 설정
 builder.Services.AddDbContext<JobScraperDbContext>(options =>
