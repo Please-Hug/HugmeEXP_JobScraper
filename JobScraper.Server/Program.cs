@@ -60,6 +60,9 @@ builder.Services.AddScoped<IKakaoMapService, KakaoMapService>();
 builder.Services.AddSingleton<IQueueClient>(_ =>
     RabbitMQClient.CreateAsync("localhost", "job-scraper-commands").GetAwaiter().GetResult());
 
+// 스케줄러 서비스 등록
+builder.Services.AddHostedService<ScrapingSchedulerService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

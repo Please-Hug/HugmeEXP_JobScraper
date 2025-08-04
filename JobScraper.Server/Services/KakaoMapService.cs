@@ -19,6 +19,10 @@ public class KakaoMapService : IKakaoMapService
     
     public async Task<Tuple<decimal, decimal>> GetCoordinatesAsync(string address)
     {
+        if (address.Contains(','))
+        {
+            address = address.Split(',')[0].Trim();
+        }
         _logger.LogInformation("KakaoMapService: Getting coordinates for address: {address}", address);
         var httpClient = _httpClientFactory.CreateClient("KakaoMapService");
         
