@@ -147,7 +147,7 @@ public class JobDetailService : IJobDetailService
                 }))
             };
             var request = new HttpRequestMessage(HttpMethod.Post, "http://localhost:8080/api/v1/recruitments/scrape");
-            request.Headers.Add("X-API-Key", "65f91852-3379-47a3-bcdb-b85241fc6b33");
+            request.Headers.Add("X-API-Key", "1234567890");
             request.Content = new StringContent(json.ToString(), System.Text.Encoding.UTF8, "application/json");
         
             var response = await client.SendAsync(request);
